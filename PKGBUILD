@@ -5,7 +5,7 @@ pkgver=1.0.0
 pkgrel=1
 pkgdesc="AI assistant with tools, MCP and long-term memory"
 arch=('x86_64')
-url="https://github.com/lowsense-dev/MD3-Agent"
+url="https://github.com/lowsense-dev/MD3-Agent-Desktop"
 license=('GPL-3.0-only')
 depends=('java-runtime>=21' 'libxtst' 'libxi' 'alsa-lib' 'fontconfig')
 makedepends=('jdk21-openjdk')

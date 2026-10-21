@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "md3-agent-linux"
+rootProject.name = "md3-agent-desktop"
 include(":app")

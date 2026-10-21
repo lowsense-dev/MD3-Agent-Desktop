@@ -4,7 +4,7 @@ Version:        %{version}
 Release:        1%{?dist}
 Summary:        AI assistant with tools, MCP and long-term memory
 License:        GPL-3.0-only
-URL:            https://github.com/lowsense-dev/MD3-Agent
+URL:            https://github.com/lowsense-dev/MD3-Agent-Desktop
 BuildArch:      x86_64
 AutoReqProv:    no
 Requires:       libX11, libXext, libXrender, libXtst, libXi, freetype, fontconfig, alsa-lib
@@ -12,7 +12,7 @@ Recommends:     bubblewrap, python3, wl-clipboard, xclip, xdg-desktop-portal
 Suggests:       speech-dispatcher
 
 %description
-MD3 Agent for Linux: chat with any OpenAI-compatible, Anthropic or Gemini model, with web search, files, shell and
+MD3 Agent Desktop: chat with any OpenAI-compatible, Anthropic or Gemini model, with web search, files, shell and
 Python tools, reminders, MCP servers and long-term memory, in a Material 3 Expressive interface.
 
 %install

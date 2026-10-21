@@ -1,6 +1,6 @@
-# MD3 Agent for Linux
+# MD3 Agent Desktop
 
-The desktop version of [MD3 Agent](https://github.com/huecoder/MD3-Agent): an AI assistant with tools, MCP servers and
+The desktop version (Linux) of [MD3 Agent](https://github.com/huecoder/MD3-Agent): an AI assistant with tools, MCP servers and
 long-term memory in a Material 3 Expressive interface. It runs on any Linux distribution, on X11 and Wayland, in any
 desktop (GNOME, KDE, XFCE, Cinnamon, Hyprland, Sway and others).
 

@@ -1,0 +1,144 @@
+# Tests, then one runnable folder (jar + jlinked runtime), then a package per format, each installed and started
+# (--version, --check-environment) on its own distribution. Tags v* publish the packages as a release.
+name: Packages
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: packages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Unit and screen tests
+        run: ./gradlew :app:test
+      - name: Test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: app/build/reports/tests/test
+
+  dist:
+    needs: test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Runnable folder
+        run: packaging/build-dist.sh
+      - name: Smoke start
+        run: |
+          dist/md3-agent/bin/md3-agent --version
+          dist/md3-agent/bin/md3-agent --check-environment
+      # A tarball keeps the executable bits that a plain artifact upload would lose.
+      - run: tar -czf md3-agent-dist.tar.gz -C dist md3-agent
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: md3-agent-dist.tar.gz
+
+  deb:
+    needs: dist
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+      - run: mkdir -p dist && tar -xzf md3-agent-dist.tar.gz -C dist
+      - name: Build .deb
+        run: packaging/deb/build-deb.sh
+      - name: Install and start
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ./dist/md3-agent_*_amd64.deb
+          md3-agent --version
+          md3-agent --check-environment
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb
+          path: dist/*.deb
+
+  rpm:
+    needs: dist
+    runs-on: ubuntu-24.04
+    container: fedora:latest
+    steps:
+      - name: Tools
+        run: dnf install -y rpm-build tar gzip findutils
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+      - run: mkdir -p dist && tar -xzf md3-agent-dist.tar.gz -C dist
+      - name: Build .rpm
+        run: packaging/rpm/build-rpm.sh
+      - name: Install and start
+        run: |
+          dnf install -y ./dist/md3-agent-*.rpm
+          md3-agent --version
+          md3-agent --check-environment
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rpm
+          path: dist/*.rpm
+
+  pacman:
+    needs: test
+    runs-on: ubuntu-24.04
+    container: archlinux:base-devel
+    steps:
+      - name: Tools
+        run: pacman -Syu --noconfirm --needed git jdk21-openjdk libxtst libxi alsa-lib fontconfig
+      - uses: actions/checkout@v4
+      # makepkg refuses to run as root.
+      - name: Build package
+        run: |
+          useradd -m builder
+          mkdir -p "$GITHUB_WORKSPACE/dist"
+          chown -R builder "$GITHUB_WORKSPACE"
+          su builder -c "cd '$GITHUB_WORKSPACE' && PKGDEST='$GITHUB_WORKSPACE/dist' makepkg -f --noconfirm"
+      - name: Install and start
+        run: |
+          pacman -U --noconfirm dist/md3-agent-*.pkg.tar.zst
+          md3-agent --version
+          md3-agent --check-environment
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pacman
+          path: dist/*.pkg.tar.zst
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [deb, rpm, pacman]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/deb/*.deb
+            artifacts/rpm/*.rpm
+            artifacts/pacman/*.pkg.tar.zst

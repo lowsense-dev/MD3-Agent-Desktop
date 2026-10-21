@@ -29,9 +29,9 @@ Priority: optional
 Depends: libc6, libx11-6, libxext6, libxrender1, libxtst6, libxi6, libfreetype6, libfontconfig1, libasound2 | libasound2t64
 Recommends: bubblewrap, python3, python3-venv, wl-clipboard, xclip, xdg-desktop-portal
 Suggests: speech-dispatcher, gnome-keyring
-Homepage: https://github.com/lowsense-dev/MD3-Agent
+Homepage: https://github.com/lowsense-dev/MD3-Agent-Desktop
 Description: AI assistant with tools, MCP and long-term memory
- MD3 Agent for Linux: chat with any OpenAI-compatible, Anthropic or Gemini
+ MD3 Agent Desktop: chat with any OpenAI-compatible, Anthropic or Gemini
  model, with web search, files, shell and Python tools, reminders, MCP servers
  and long-term memory, in a Material 3 Expressive interface.
 CONTROL
