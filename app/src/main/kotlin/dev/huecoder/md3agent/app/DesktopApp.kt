@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,7 +47,14 @@ import androidx.compose.ui.window.ApplicationScope
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -69,7 +77,7 @@ import dev.huecoder.md3agent.ui.avatar.ProvideAgentLook
 import dev.huecoder.md3agent.ui.haptics.ProvideHaptics
 import dev.huecoder.md3agent.ui.navigation.AppNavHost
 import dev.huecoder.md3agent.ui.navigation.ChatRoute
-import dev.huecoder.md3agent.ui.res.painterResource
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import dev.huecoder.md3agent.ui.text.Strings
 import dev.huecoder.md3agent.ui.text.stringResource
 import dev.huecoder.md3agent.ui.theme.AssistantTheme
@@ -94,6 +102,30 @@ class AppWindows {
 /** Theme, container and the platform stand-ins every window's content needs. */
 @Composable
 fun AppRoot(container: AppContainer, snackbar: SnackbarHostState, content: @Composable () -> Unit) {
+    WindowOwners { AppRootContent(container, snackbar, content) }
+}
+
+/** Each window is a lifecycle and view-model owner of its own, the way an Android activity is. */
+@Composable
+private fun WindowOwners(content: @Composable () -> Unit) {
+    val owner = remember { WindowOwner() }
+    DisposableEffect(owner) { onDispose { owner.destroy() } }
+    CompositionLocalProvider(LocalLifecycleOwner provides owner, LocalViewModelStoreOwner provides owner, content = content)
+}
+
+private class WindowOwner : LifecycleOwner, ViewModelStoreOwner {
+    private val registry = LifecycleRegistry(this).apply { currentState = Lifecycle.State.RESUMED }
+    override val lifecycle: Lifecycle get() = registry
+    override val viewModelStore = ViewModelStore()
+
+    fun destroy() {
+        registry.currentState = Lifecycle.State.DESTROYED
+        viewModelStore.clear()
+    }
+}
+
+@Composable
+private fun AppRootContent(container: AppContainer, snackbar: SnackbarHostState, content: @Composable () -> Unit) {
     val ui by remember(container) { container.settings.settings.map { it.ui } }.collectAsStateWithLifecycle(initialValue = null)
     val systemDark by container.appearance.darkMode.collectAsStateWithLifecycle()
     val accent by container.appearance.accent.collectAsStateWithLifecycle()
@@ -126,9 +158,10 @@ fun AppRoot(container: AppContainer, snackbar: SnackbarHostState, content: @Comp
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ApplicationScope.DesktopApp(container: AppContainer, windows: AppWindows) {
-    val mainVisible by windows.mainVisible.collectAsStateWithLifecycle()
-    val overlayVisible by windows.overlayVisible.collectAsStateWithLifecycle()
-    val alarms by container.reminderAlarms.active.collectAsStateWithLifecycle()
+    // The application level has no window yet, hence no lifecycle owner: plain collectAsState here.
+    val mainVisible by windows.mainVisible.collectAsState()
+    val overlayVisible by windows.overlayVisible.collectAsState()
+    val alarms by container.reminderAlarms.active.collectAsState()
     val title = Strings.get(R.string.app_name)
 
     if (mainVisible) {
@@ -140,7 +173,7 @@ fun ApplicationScope.DesktopApp(container: AppContainer, windows: AppWindows) {
             onCloseRequest = ::exitApplication,
             state = state,
             title = title,
-            icon = painterResource(R.drawable.ic_launcher_foreground),
+            icon = WindowIcon.painter,
             onPreviewKeyEvent = { event -> handleShortcut(event, back, navigator) },
         ) {
             window.minimumSize = java.awt.Dimension(MIN_WIDTH, MIN_HEIGHT)
@@ -197,7 +230,7 @@ private fun OverlayWindow(container: AppContainer, windows: AppWindows) {
         state = state,
         title = Strings.get(R.string.overlay_title),
         alwaysOnTop = true,
-        icon = painterResource(R.drawable.ic_launcher_foreground),
+        icon = WindowIcon.painter,
         onPreviewKeyEvent = { event ->
             if (event.type == KeyEventType.KeyDown && event.key == Key.Escape && !back.back()) {
                 windows.overlayVisible.value = false
@@ -250,7 +283,7 @@ private fun AlarmWindow(container: AppContainer, alarm: ActiveAlarm) {
         title = Strings.get(R.string.alarm_notification_title),
         alwaysOnTop = true,
         resizable = false,
-        icon = painterResource(R.drawable.ic_launcher_foreground),
+        icon = WindowIcon.painter,
     ) {
         AppRoot(container, snackbar) {
             Surface(Modifier.fillMaxSize()) {
@@ -267,6 +300,17 @@ private fun AlarmWindow(container: AppContainer, alarm: ActiveAlarm) {
                 }
             }
         }
+    }
+}
+
+/**
+ * The window icon is needed before any window exists, when Compose has no graphics backend for vector paths yet, so it
+ * is a PNG decoded by Skia directly.
+ */
+private object WindowIcon {
+    val painter: androidx.compose.ui.graphics.painter.Painter by lazy {
+        val bytes = WindowIcon::class.java.getResourceAsStream("/icons/md3-agent.png")!!.use { it.readBytes() }
+        androidx.compose.ui.graphics.painter.BitmapPainter(org.jetbrains.skia.Image.makeFromEncoded(bytes).toComposeImageBitmap())
     }
 }
 
