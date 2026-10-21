@@ -38,9 +38,13 @@ class ClipboardReader(
             val files = run(readType(type))?.decodeToString()?.let(ClipboardParser::uriList).orEmpty()
             if (files.isNotEmpty()) return ClipboardContent.Files(files)
         }
-        val image = types.firstOrNull { it == PNG } ?: types.firstOrNull { it.startsWith("image/") } ?: return null
-        val bytes = run(readType(image))?.takeIf { it.isNotEmpty() } ?: return null
-        return ClipboardContent.Image(bytes, image)
+        val image = types.firstOrNull { it == PNG } ?: types.firstOrNull { it.startsWith("image/") }
+        if (image != null) {
+            run(readType(image))?.takeIf { it.isNotEmpty() }?.let { return ClipboardContent.Image(it, image) }
+        }
+        // Text the AWT bridge did not see (a Wayland-native app copied it): take it from the tool too.
+        val text = TEXT_TYPES.firstOrNull { it in types } ?: return null
+        return run(readType(text))?.decodeToString()?.let(ClipboardContent::Text)
     }
 
     private fun listTypes(): List<String> = if (wayland) listOf("wl-paste", "--list-types") else listOf("xclip", "-selection", "clipboard", "-t", "TARGETS", "-o")
@@ -50,6 +54,7 @@ class ClipboardReader(
     companion object {
         private const val PNG = "image/png"
         private val FILE_TYPES = listOf("text/uri-list", "x-special/gnome-copied-files")
+        private val TEXT_TYPES = listOf("text/plain;charset=utf-8", "UTF8_STRING", "text/plain")
         private const val TIMEOUT_S = 3L
         private const val MAX_BYTES = 64L * 1024 * 1024
 

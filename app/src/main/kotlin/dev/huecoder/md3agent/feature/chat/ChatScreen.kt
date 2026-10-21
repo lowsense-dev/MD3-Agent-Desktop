@@ -98,6 +98,8 @@ fun ChatScreen(chatId: String?, onBack: () -> Unit, onOpenChat: (String) -> Unit
     }
     val forkTitle = stringResource(R.string.chat_fork_title, state.title.asString())
     BackHandler(enabled = editing != null) { cancelEdit() }
+    // Escape stops a reply that is still coming, before it would leave the chat.
+    BackHandler(enabled = state.isStreaming) { viewModel.stop() }
     var pickingModel by rememberSaveable { mutableStateOf(false) }
     val typingAttention = remember { TypingAttention() }
     val knockout = remember { KnockoutStage() }

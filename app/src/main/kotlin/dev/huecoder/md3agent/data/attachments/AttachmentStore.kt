@@ -59,6 +59,7 @@ class AttachmentStore(private val root: File, private val downloads: () -> File)
     /** A file the user picked, pasted or dropped. */
     suspend fun import(source: File, name: String = source.name): Attachment = withContext(Dispatchers.IO) {
         if (!source.isFile) throw IOException("Could not open the file")
+        if (source.length() > MAX_FILE_BYTES) throw AttachmentTooLargeException((MAX_FILE_BYTES / BYTES_PER_MB).toInt())
         val mimeType = TextFormats.guessMimeType(name)
         if (mimeType.startsWith("image/")) {
             storeImageForModel(name, mimeType) { source.readBytes() }

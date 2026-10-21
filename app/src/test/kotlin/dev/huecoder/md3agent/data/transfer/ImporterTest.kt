@@ -64,4 +64,21 @@ class ImporterTest {
         val imported = Attachment.decode(messages.single().attachmentsJson).single()
         assertEquals("привет", desktop.attachments.file(imported).readText())
     }
+
+    @Test
+    fun overwritingAnExistingChatKeepsItsAttachments() = runBlocking {
+        val phone = testContainer()
+        val chat = phone.chats.createChat("С файлом", ModelSelection("p", "m"), AgentProfile.MAIN_AGENT_ID)
+        val attachment = phone.attachments.importBytes("note.txt", "версия телефона".toByteArray(), forModel = true)
+        phone.chats.appendUserMessage(chat.id, "файл", listOf(attachment))
+        val file = Exporter(phone).export(password, includeChats = true, iterations = 1_000)
+
+        val desktop = testContainer()
+        Importer(desktop).apply(Importer(desktop).preview(file, password), overwrite = emptySet())
+        val again = Importer(desktop).preview(file, password)
+        Importer(desktop).apply(again, overwrite = setOf("chat:${chat.id}"))
+
+        val imported = Attachment.decode(desktop.chats.history(chat.id).single().attachmentsJson).single()
+        assertEquals("версия телефона", desktop.attachments.file(imported).readText())
+    }
 }

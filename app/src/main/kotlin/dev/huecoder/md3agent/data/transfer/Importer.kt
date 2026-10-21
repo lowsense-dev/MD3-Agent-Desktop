@@ -82,11 +82,12 @@ class Importer(private val container: AppContainer) {
         data.payload.memories.filter { take("memory:${it.id}") }.forEach { container.memories.restore(it) }
         val folder = container.attachments.directory
         data.payload.chats.filter { take("chat:${it.chat.id}") }.forEach { dump ->
+            // Removing the old copy deletes its attachment files, which share ids with the incoming ones: remove first.
+            if (container.chats.chat(dump.chat.id) != null) container.chats.deleteForever(listOf(dump.chat.id))
             dump.files.forEach { (id, base64) ->
                 // Attachment ids are file names the app chose; anything that could leave the folder is skipped.
                 if (id.isNotBlank() && '/' !in id && id != "." && id != "..") folder.resolve(id).writeBytes(Base64.getDecoder().decode(base64))
             }
-            if (container.chats.chat(dump.chat.id) != null) container.chats.deleteForever(listOf(dump.chat.id))
             container.chats.restoreChat(dump.chat.copy(folderId = null), dump.messages)
         }
     }

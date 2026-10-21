@@ -53,4 +53,14 @@ class ClipboardReaderTest {
         val text = ClipboardContent.Text("hello")
         assertEquals(text, reader(text, wayland = true, mapOf("wl-paste --list-types" to "text/plain\n")).read())
     }
+
+    @Test
+    fun textComesFromWlPasteWhenAwtSeesNothing() = runBlocking {
+        val result = reader(
+            null,
+            wayland = true,
+            mapOf("wl-paste --list-types" to "text/plain;charset=utf-8\nUTF8_STRING\n", "wl-paste --no-newline --type text/plain;charset=utf-8" to "привет из Wayland"),
+        ).read()
+        assertEquals(ClipboardContent.Text("привет из Wayland"), result)
+    }
 }
