@@ -848,4 +848,9 @@
         <item quantity="other">%d вызова</item>
     </plurals>
     <string name="statistics_failed_count">%1$d с ошибкой</string>
+    <string name="reminder_missed">Пропущено в %1$s</string>
+    <string name="reminder_action_open">Открыть чат</string>
+    <string name="reminder_action_stop">Стоп</string>
+    <string name="reminder_action_snooze">Отложить на 10 мин</string>
+    <string name="alarm_notification_title">Будильник</string>
 </resources>

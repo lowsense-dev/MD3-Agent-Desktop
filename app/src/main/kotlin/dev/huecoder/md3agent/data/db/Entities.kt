@@ -103,4 +103,8 @@ data class ReminderEntity(
     val triggerAt: Long,
     val chatId: String?,
     val createdAt: Long,
+    /** Alarms and timers ring and show a window; plain reminders only notify. */
+    val sound: Boolean = false,
+    /** Comma-separated weekdays (MONDAY,…) a repeating alarm comes back on; null for one-time. */
+    val repeatDays: String? = null,
 )

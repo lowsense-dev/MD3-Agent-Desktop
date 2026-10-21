@@ -232,4 +232,7 @@ interface ReminderDao {
 
     @Query("DELETE FROM reminders WHERE id = :id")
     suspend fun delete(id: String): Int
+
+    @Query("UPDATE reminders SET triggerAt = :triggerAt WHERE id = :id")
+    suspend fun reschedule(id: String, triggerAt: Long): Int
 }

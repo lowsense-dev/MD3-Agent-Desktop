@@ -840,4 +840,9 @@
         <item quantity="other">%d calls</item>
     </plurals>
     <string name="statistics_failed_count">%1$d failed</string>
+    <string name="reminder_missed">Missed at %1$s</string>
+    <string name="reminder_action_open">Open chat</string>
+    <string name="reminder_action_stop">Stop</string>
+    <string name="reminder_action_snooze">Snooze 10 min</string>
+    <string name="alarm_notification_title">Alarm</string>
 </resources>
