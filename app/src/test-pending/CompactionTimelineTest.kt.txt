@@ -1,0 +1,9 @@
+    @Test
+    fun `the timeline shows a divider where the chat was compacted`() {
+        val history = listOf(row(MessageRole.USER, "q"), row(MessageRole.ASSISTANT, "a"), row(MessageRole.SYSTEM, "S"), row(MessageRole.USER, "next"))
+
+        val items = ChatTimeline.build(history, draft = null)
+
+        assertEquals(listOf(ChatItem.User::class, ChatItem.Reply::class, ChatItem.Compacted::class, ChatItem.User::class), items.map { it::class })
+        assertEquals("S", (items[2] as ChatItem.Compacted).summary)
+    }

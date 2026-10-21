@@ -26,7 +26,9 @@ kotlin {
 val generateR by tasks.registering {
     val strings = file("src/main/resources/strings/values/strings.xml")
     val out = layout.buildDirectory.dir("generated/r")
+    val version = appVersion
     inputs.file(strings)
+    inputs.property("version", version)
     outputs.dir(out)
     doLast {
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(strings)
@@ -51,6 +53,9 @@ val generateR by tasks.registering {
         }
         val dir = out.get().asFile.resolve("dev/huecoder/md3agent").apply { mkdirs() }
         dir.resolve("R.kt").writeText(text)
+        dir.resolve("BuildConfig.kt").writeText(
+            "package dev.huecoder.md3agent\n\nobject BuildConfig {\n    const val VERSION_NAME: String = \"$version\"\n}\n",
+        )
     }
 }
 
