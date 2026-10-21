@@ -1,0 +1,11 @@
+.superpowers/
+.gradle/
+build/
+.kotlin/
+/local.properties
+/.idea/
+*.iml
+*.AppImage
+*.pkg.tar.zst
+/pkg/
+/src/
