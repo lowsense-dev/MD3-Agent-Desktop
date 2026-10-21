@@ -96,6 +96,8 @@ dependencies {
     implementation(libs.dyn4j)
     implementation(libs.dbus.java.core)
     implementation(libs.dbus.java.unixsocket)
+    // dbus-java logs through SLF4J; without a binding it prints a warning on every start.
+    runtimeOnly(libs.slf4j.nop)
 
     testImplementation(libs.junit)
     testImplementation(kotlin("test-junit"))
@@ -111,10 +113,27 @@ tasks.test {
 compose.desktop {
     application {
         mainClass = "dev.huecoder.md3agent.MainKt"
+        jvmArgs += listOf("-Dmd3agent.launcher=md3-agent", "-Dawt.useSystemAAFontSettings=on")
+        // Packages are built by packaging/*.sh from a jlinked runtime: the jpackage launcher of some JDK 21 builds
+        // (Arch's among them) starts the JVM with empty arguments and crashes.
         nativeDistributions {
             targetFormats(TargetFormat.Deb, TargetFormat.Rpm)
             packageName = "md3-agent"
             packageVersion = appVersion
+            description = "AI assistant with tools, MCP and long-term memory"
+            vendor = "huecoder"
+            licenseFile.set(rootProject.file("LICENSE"))
+            // suggestRuntimeModules plus what reflection-heavy libraries (dbus-java, Room) need at runtime.
+            modules("java.instrument", "java.management", "java.naming", "java.sql", "jdk.httpserver", "jdk.security.auth", "jdk.unsupported", "jdk.crypto.ec", "jdk.zipfs")
+            linux {
+                iconFile.set(rootProject.file("packaging/icons/md3-agent-512.png"))
+                shortcut = true
+                menuGroup = "Utility"
+                appCategory = "utils"
+                debMaintainer = "lowsense-dev <128370358+lowsense-dev@users.noreply.github.com>"
+                debPackageVersion = appVersion
+                rpmPackageVersion = appVersion
+            }
         }
     }
 }

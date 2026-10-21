@@ -1,0 +1,19 @@
+[Desktop Entry]
+Type=Application
+Name=MD3 Agent
+GenericName=AI assistant
+GenericName[ru]=ИИ-ассистент
+Comment=AI assistant with tools, MCP and long-term memory
+Comment[ru]=ИИ-ассистент с тулами, MCP и долговременной памятью
+Exec=md3-agent %U
+Icon=md3-agent
+Terminal=false
+Categories=Utility;Chat;
+Keywords=AI;assistant;chat;LLM;GPT;Claude;
+StartupWMClass=dev-huecoder-md3agent-MainKt
+Actions=quick-question;
+
+[Desktop Action quick-question]
+Name=Quick question
+Name[ru]=Быстрый вопрос
+Exec=md3-agent --overlay

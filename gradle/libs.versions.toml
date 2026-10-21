@@ -20,6 +20,7 @@ junit = "4.13.2"
 materialSymbols = "2.2.1"
 dyn4j = "6.0.0"
 dbusJava = "5.2.2"
+slf4j = "2.0.17"
 
 [libraries]
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
@@ -51,6 +52,7 @@ dyn4j = { module = "org.dyn4j:dyn4j", version.ref = "dyn4j" }
 dbus-java-core = { module = "com.github.hypfvieh:dbus-java-core", version.ref = "dbusJava" }
 dbus-java-unixsocket = { module = "com.github.hypfvieh:dbus-java-transport-native-unixsocket", version.ref = "dbusJava" }
 junit = { module = "junit:junit", version.ref = "junit" }
+slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
