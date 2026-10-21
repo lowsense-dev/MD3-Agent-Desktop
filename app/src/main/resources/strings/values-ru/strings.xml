@@ -317,9 +317,9 @@
     <string name="chat_tool_command">Команда %1$s</string>
     <string name="settings_access">Доступ и разрешения</string>
     <string name="access_section_shell">Команды</string>
-    <string name="access_shell_hint">Где ассистент запускает shell-команды. Ассистент знает, что ты выбрал, и понимает, до чего может дотянуться.</string>
-    <string name="access_mode_sandbox">Песочница приложения</string>
-    <string name="access_mode_sandbox_summary">Встроенный shell, только свои файлы</string>
+    <string name="access_shell_hint">Где ассистент запускает команды и Python. Он знает, что выбрано, и понимает, к чему у него есть доступ.</string>
+    <string name="access_mode_sandbox">Песочница</string>
+    <string name="access_mode_sandbox_summary">bubblewrap, видна только рабочая папка агента</string>
     <string name="access_mode_termux">Termux</string>
     <string name="access_mode_termux_summary">Bash с пакетами Termux</string>
     <string name="access_mode_shizuku">Shizuku</string>
@@ -363,9 +363,9 @@
     </plurals>
     <string name="chat_attachment_no_viewer">Нечем открыть %1$s</string>
     <string name="access_section_files">Файлы</string>
-    <string name="access_files_hint">Какие файлы ассистент может читать, записывать и отправлять тебе. Его рабочая папка та же, где стартует шелл песочницы.</string>
-    <string name="access_files_app">Папка приложения</string>
-    <string name="access_files_app_summary">Только рабочая папка и вложения из чата</string>
+    <string name="access_files_hint">Какие файлы ассистент может читать, писать и показывать вам. Его рабочая папка: %1$s.</string>
+    <string name="access_files_app">Рабочая папка</string>
+    <string name="access_files_app_summary">Только рабочая папка агента и вложения чатов</string>
     <string name="access_files_shared">Память телефона</string>
     <string name="access_files_shared_summary">Download, DCIM, Documents и всё остальное, без root</string>
     <string name="access_files_root">Root</string>
@@ -853,4 +853,35 @@
     <string name="reminder_action_stop">Стоп</string>
     <string name="reminder_action_snooze">Отложить на 10 мин</string>
     <string name="alarm_notification_title">Будильник</string>
+    <plurals name="files_copied_to_clipboard">
+        <item quantity="one">%d файл скопирован, вставьте его куда нужно</item>
+        <item quantity="few">%d файла скопированы, вставьте их куда нужно</item>
+        <item quantity="many">%d файлов скопировано, вставьте их куда нужно</item>
+        <item quantity="other">%d файла скопировано, вставьте их куда нужно</item>
+    </plurals>
+    <string name="access_mode_system">Система</string>
+    <string name="access_mode_system_summary">Ваш bash, доступно всё, что доступно вам</string>
+    <string name="access_files_home">Домашняя папка</string>
+    <string name="access_files_home_summary">Всё в вашей домашней папке</string>
+    <string name="access_sandbox_network">Сеть в песочнице</string>
+    <string name="access_sandbox_network_summary">Команды и скрипты в песочнице могут выходить в интернет</string>
+    <string name="access_section_environment">Этот компьютер</string>
+    <string name="access_environment_hint">Что MD3 Agent нашёл в %1$s. Если чего-то нет, отключается только то, что от этого зависит.</string>
+    <string name="access_component_found">Найдено</string>
+    <string name="access_component_missing">Не найдено</string>
+    <string name="access_install_hint">Установить: %1$s</string>
+    <string name="env_bwrap">Песочница (bubblewrap)</string>
+    <string name="env_python">Python 3</string>
+    <string name="env_python_venv">Python venv, для пакетов pip</string>
+    <string name="env_wl_paste">Вставка файлов на Wayland (wl-paste)</string>
+    <string name="env_xclip">Вставка файлов на X11 (xclip)</string>
+    <string name="env_portal">Системный выбор файлов (xdg-desktop-portal)</string>
+    <string name="env_secret_service">Связка ключей для API-ключей (Secret Service)</string>
+    <string name="env_notifications">Уведомления</string>
+    <string name="env_systemd_user">Напоминания при закрытом приложении (systemd)</string>
+    <string name="env_speech">Системная озвучка (speech-dispatcher)</string>
+    <string name="access_section_shortcut">Окно быстрого вопроса</string>
+    <string name="access_shortcut_hint">Назначьте эту команду на сочетание клавиш в настройках вашего окружения:</string>
+    <string name="access_shortcut_bound">Назначено через окружение: %1$s</string>
+    <string name="access_recheck">Проверить снова</string>
 </resources>

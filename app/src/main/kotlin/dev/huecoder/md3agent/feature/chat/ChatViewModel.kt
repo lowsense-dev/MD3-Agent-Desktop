@@ -1,0 +1,378 @@
+package dev.huecoder.md3agent.feature.chat
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dev.huecoder.md3agent.llm.models.ModelInfo
+import dev.huecoder.md3agent.conversation.ContextUsage
+import dev.huecoder.md3agent.conversation.Compaction
+import dev.huecoder.md3agent.R
+import dev.huecoder.md3agent.conversation.ApprovalDecision
+import dev.huecoder.md3agent.conversation.ConversationRunner
+import dev.huecoder.md3agent.conversation.NoModelConfiguredException
+import dev.huecoder.md3agent.conversation.StreamingDraft
+import dev.huecoder.md3agent.conversation.ToolApprovals
+import dev.huecoder.md3agent.conversation.PendingPrompt
+import dev.huecoder.md3agent.conversation.PromptAnswer
+import dev.huecoder.md3agent.conversation.UserPrompts
+import dev.huecoder.md3agent.data.attachments.Attachment
+import dev.huecoder.md3agent.data.attachments.AttachmentStore
+import dev.huecoder.md3agent.data.attachments.AttachmentTooLargeException
+import dev.huecoder.md3agent.data.chat.ChatLook
+import dev.huecoder.md3agent.data.chat.ChatRepository
+import dev.huecoder.md3agent.data.db.ChatEntity
+import dev.huecoder.md3agent.data.db.MessageEntity
+import dev.huecoder.md3agent.data.db.selection
+import dev.huecoder.md3agent.data.settings.AgentProfile
+import dev.huecoder.md3agent.data.settings.AgentSettings
+import dev.huecoder.md3agent.data.models.ModelCatalog
+import dev.huecoder.md3agent.data.settings.ModelSelection
+import dev.huecoder.md3agent.llm.models.ModelFamily
+import dev.huecoder.md3agent.data.settings.SettingsRepository
+import dev.huecoder.md3agent.data.settings.SpeakReplies
+import dev.huecoder.md3agent.data.settings.TypingStyle
+import dev.huecoder.md3agent.data.settings.VoiceSettings
+import dev.huecoder.md3agent.ui.text.UiText
+import dev.huecoder.md3agent.voice.ReplySpeaker
+import dev.huecoder.md3agent.voice.SpeechSynthesizer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.io.IOException
+
+data class ChatUiState(
+    val chatId: String? = null,
+    val title: UiText = NEW_CHAT_TITLE,
+    val agentId: String? = null,
+    val agentName: String = AgentProfile.DEFAULT_AGENT_NAME,
+    val modelId: String? = null,
+    val selection: ModelSelection? = null,
+    val modelFamily: ModelFamily? = null,
+    val modelName: String? = null,
+    val messages: List<ChatItem> = emptyList(),
+    val showTokenUsage: Boolean = false,
+    val typing: TypingStyle = TypingStyle(),
+    val isStreaming: Boolean = false,
+    val pendingAttachments: List<Attachment> = emptyList(),
+    val isImporting: Boolean = false,
+    val look: ChatLook = ChatLook.Default,
+    val focusItemId: String? = null,
+    val context: ContextUsage? = null,
+    val isCompacting: Boolean = false,
+) {
+    val isStarted: Boolean get() = chatId != null
+
+    fun canSend(text: String): Boolean = (text.isNotBlank() || pendingAttachments.isNotEmpty()) && !isImporting
+
+    companion object {
+        val NEW_CHAT_TITLE = UiText.Resource(R.string.home_new_chat)
+    }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class ChatViewModel(
+    initialChatId: String?,
+    focusMessageId: String?,
+    private val chats: ChatRepository,
+    private val runner: ConversationRunner,
+    private val attachments: AttachmentStore,
+    private val approvals: ToolApprovals,
+    private val prompts: UserPrompts,
+    private val settings: SettingsRepository,
+    private val catalog: ModelCatalog,
+    private val appScope: CoroutineScope,
+    synthesizers: (VoiceSettings, AgentProfile) -> SpeechSynthesizer,
+    savedState: SavedStateHandle = SavedStateHandle(),
+) : ViewModel() {
+    private val chatId = savedState.getMutableStateFlow(CHAT_ID_KEY, initialChatId)
+    private val pendingFocus = MutableStateFlow(focusMessageId)
+    private val _errors = MutableStateFlow<UiText?>(null)
+    private val pending = MutableStateFlow(PendingAttachments())
+    private val pendingSelection = MutableStateFlow<ModelSelection?>(null)
+    private val pendingAgentId = MutableStateFlow<String?>(null)
+    private val _restoredText = MutableStateFlow<String?>(null)
+    private val _editing = MutableStateFlow<MessageEdit?>(null)
+
+    val errors: StateFlow<UiText?> = _errors.asStateFlow()
+    val restoredText: StateFlow<String?> = _restoredText.asStateFlow()
+    val editing: StateFlow<MessageEdit?> = _editing.asStateFlow()
+
+    private val appSettings = settings.settings
+    private val voice = appSettings.map { it.voice }.stateIn(viewModelScope, SharingStarted.Eagerly, VoiceSettings())
+    private val agents = appSettings.map { it.agents }.stateIn(viewModelScope, SharingStarted.Eagerly, AgentSettings())
+    private val speaker = ReplySpeaker(viewModelScope) { synthesizers(voice.value, agents.value.forChat(state.value.agentId)) }
+    private val narration = ReplyNarration(speaker)
+    private var inputFromVoice = false
+
+    val speakingId: StateFlow<String?> = speaker.speakingId
+
+    val yolo: StateFlow<Boolean> = chatId.flatMapLatest { id -> id?.let(approvals::yolo) ?: flowOf(false) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), false)
+
+    val pendingPrompt: StateFlow<PendingPrompt?> = combine(chatId, prompts.pending) { id, asked -> id?.let(asked::get) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+
+    val state: StateFlow<ChatUiState> = chatId
+        .flatMapLatest { id ->
+            if (id == null) {
+                combine(appSettings, pendingSelection, pendingAgentId) { current, chosen, chosenAgentId ->
+                    val agent = current.agents.resolve(chosenAgentId)
+                    ChatUiState(agentId = agent.id, agentName = agent.name, showTokenUsage = current.chat.showTokenUsage, typing = current.chat.typing).withSelection(chosen ?: current.activeSelection)
+                }
+            } else {
+                combine(chats.observeChat(id), chats.observeMessages(id), runner.drafts.combine(runner.compacting, ::Pair), appSettings, pendingFocus) { chat, messages, work, current, focus ->
+                    val (drafts, compacting) = work
+                    val agent = current.agents.forChat(chat?.agentId)
+                    chat?.providerId?.let { catalog.loadIfMissing(it) }
+                    buildState(id, chat, messages, drafts[id], focus, isCompacting = id in compacting)
+                        .copy(agentId = agent.id, agentName = agent.name, showTokenUsage = current.chat.showTokenUsage, typing = current.chat.typing)
+                        .withSelection(chat?.selection ?: current.activeSelection)
+                }
+            }
+        }
+        .combine(pending) { state, attached -> state.copy(pendingAttachments = attached.items, isImporting = attached.importing > 0) }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), ChatUiState(chatId = chatId.value))
+
+    init {
+        viewModelScope.launch {
+            // Subscribing only while narrating lets the state stop with the screen the rest of the time (WhileSubscribed).
+            narration.listening
+                .flatMapLatest { listening -> if (listening) state.map { it.messages.lastOrNull() as? ChatItem.Reply } else emptyFlow() }
+                .filterNotNull()
+                .distinctUntilChanged()
+                .collect(narration::onLatest)
+        }
+        viewModelScope.launch {
+            speaker.failures.collect { _errors.value = UiText.Resource(R.string.voice_speak_failed, listOf(it)) }
+        }
+    }
+
+    fun noteDictation() {
+        inputFromVoice = true
+    }
+
+    fun send(text: String) {
+        val current = pending.value
+        if ((text.isBlank() && current.items.isEmpty()) || current.importing > 0) return
+        val attached = pending.value.items
+        val edit = _editing.value
+        _editing.value = null
+        pending.update { it.copy(items = emptyList()) }
+        if (shouldNarrate(fromVoice = inputFromVoice)) narration.arm(latestReplyId())
+        inputFromVoice = false
+        viewModelScope.launch {
+            val id = chatId.value
+            try {
+                when {
+                    id == null -> chatId.value = runner.startChat(text, attached, pendingSelection.value, state.value.agentId).id
+                    edit != null -> runner.resend(id, edit.messageId, text, attached)
+                    else -> runner.send(id, text, attached)
+                }
+            } catch (e: NoModelConfiguredException) {
+                pending.update { it.copy(items = attached + it.items) }
+                _restoredText.value = text
+                _errors.value = UiText.Resource(R.string.chat_error_no_model)
+            }
+        }
+    }
+
+    fun draft(): String = chats.draft(chatId.value)
+
+    fun saveDraft(text: String) = chats.saveDraft(chatId.value, text)
+
+    fun rename(title: String) {
+        val id = chatId.value ?: return
+        viewModelScope.launch { chats.renameByUser(id, title) }
+    }
+
+    fun setLook(look: ChatLook) {
+        val id = chatId.value ?: return
+        viewModelScope.launch { chats.setLook(id, look) }
+    }
+
+    fun delete() {
+        val id = chatId.value ?: return
+        runner.cancel(id)
+        appScope.launch { chats.trash(setOf(id)) }
+    }
+
+    fun selectModel(selection: ModelSelection) {
+        val id = chatId.value
+        if (id == null) pendingSelection.value = selection else viewModelScope.launch { chats.setModel(id, selection) }
+    }
+
+    fun selectAgent(agentId: String) {
+        val id = chatId.value
+        if (id == null) pendingAgentId.value = agentId else viewModelScope.launch { chats.setAgent(id, agentId) }
+    }
+
+    private suspend fun ChatUiState.withSelection(selection: ModelSelection?): ChatUiState {
+        if (selection == null) return this
+        val info = catalog.infoLoaded(selection.providerId, selection.modelId)
+        return copy(selection = selection, modelId = selection.modelId, modelFamily = info.family, modelName = info.displayName)
+    }
+
+    fun attach(files: List<java.io.File>) = files.forEach { file -> importAttachment { attachments.import(file) } }
+
+    /** A picture pasted from the clipboard, which has no file of its own. */
+    fun attachImage(bytes: ByteArray, mimeType: String) {
+        val extension = mimeType.substringAfter('/').substringBefore(';').ifBlank { "png" }
+        importAttachment { attachments.importBytes("pasted-${System.currentTimeMillis()}.$extension", bytes, forModel = true) }
+    }
+
+    private fun importAttachment(import: suspend () -> Attachment) {
+        run {
+            pending.update { it.copy(importing = it.importing + 1) }
+            viewModelScope.launch {
+                try {
+                    val attachment = import()
+                    pending.update { it.copy(items = it.items + attachment) }
+                } catch (e: AttachmentTooLargeException) {
+                    _errors.value = UiText.Resource(R.string.chat_attachment_too_large, listOf(e.limitMb))
+                } catch (e: IOException) {
+                    _errors.value = UiText.Resource(R.string.chat_attachment_failed)
+                } catch (e: IllegalArgumentException) {
+                    _errors.value = UiText.Resource(R.string.chat_attachment_image_unreadable)
+                } finally {
+                    pending.update { it.copy(importing = it.importing - 1) }
+                }
+            }
+        }
+    }
+
+    fun removeAttachment(attachment: Attachment) {
+        pending.update { it.copy(items = it.items - attachment) }
+        // The edited message still owns its files until the edit is sent.
+        if (_editing.value?.original?.contains(attachment) == true) return
+        viewModelScope.launch { attachments.delete(listOf(attachment)) }
+    }
+
+    fun startEdit(message: ChatItem.User, composerText: String) {
+        if (state.value.isStreaming) return
+        val previous = _editing.value
+        pending.update { it.copy(items = it.items - previous?.original.orEmpty().toSet() + message.attachments) }
+        _editing.value = MessageEdit(message.id, message.attachments, previous?.previousText ?: composerText)
+    }
+
+    fun cancelEdit(): String? {
+        val edit = _editing.value ?: return null
+        _editing.value = null
+        pending.update { it.copy(items = it.items - edit.original.toSet()) }
+        return edit.previousText
+    }
+
+    fun fork(messageId: String, title: String, onForked: (String) -> Unit) {
+        val id = chatId.value ?: return
+        viewModelScope.launch {
+            try {
+                chats.fork(id, messageId, title)?.let(onForked)
+            } catch (e: IOException) {
+                _errors.value = UiText.Resource(R.string.chat_fork_failed)
+            }
+        }
+    }
+
+    fun stop() {
+        chatId.value?.let(runner::cancel)
+        stopSpeaking()
+    }
+
+    fun answerPrompt(prompt: PendingPrompt, answer: PromptAnswer) = prompts.answer(prompt.id, answer)
+
+    fun respondToApproval(call: ToolCallUi, decision: ApprovalDecision) {
+        chatId.value?.let { approvals.respond(it, call.id, decision) }
+    }
+
+    fun setYolo(on: Boolean) {
+        chatId.value?.let { approvals.setYolo(it, on) }
+    }
+
+    fun regenerate(reply: ChatItem.Reply) {
+        if (shouldNarrate(fromVoice = false)) narration.arm(latestReplyId())
+        viewModelScope.launch { runner.regenerate(reply.anchor) }
+    }
+
+    fun toggleSpeech(reply: ChatItem.Reply) {
+        if (speakingId.value == reply.id) return stopSpeaking()
+        narration.disarm()
+        speaker.speak(reply.id, reply.spokenText())
+    }
+
+    private fun stopSpeaking() {
+        narration.disarm()
+        speaker.stop()
+    }
+
+    private fun shouldNarrate(fromVoice: Boolean) = when (voice.value.speakReplies) {
+        SpeakReplies.NEVER -> false
+        SpeakReplies.AFTER_VOICE_INPUT -> fromVoice
+        SpeakReplies.ALWAYS -> true
+    }
+
+    private fun latestReplyId(): String? = (state.value.messages.lastOrNull() as? ChatItem.Reply)?.id
+
+    fun consumeRestoredText() {
+        _restoredText.value = null
+    }
+
+    fun consumeError() {
+        _errors.value = null
+    }
+
+    private val replyMemo = ChatTimeline.ReplyMemo()
+
+    private fun buildState(id: String, chat: ChatEntity?, messages: List<MessageEntity>, draft: StreamingDraft?, focus: String?, isCompacting: Boolean): ChatUiState {
+        val items = ChatTimeline.build(messages, draft, replyMemo) { catalog.known(chat?.providerId, it) }
+        val window = chat?.modelId?.let { modelId -> (catalog.known(chat.providerId, modelId) ?: ModelInfo(modelId)).contextWindow }
+        return ChatUiState(
+            context = Compaction.usage(messages, window),
+            isCompacting = isCompacting,
+            chatId = id,
+            title = chat?.title?.let(UiText::Raw) ?: ChatUiState.NEW_CHAT_TITLE,
+            modelId = chat?.modelId,
+            look = chat?.let { ChatLook.of(it.iconKey, it.colorKey, it.shapeKey) } ?: ChatLook.Default,
+            messages = items,
+            isStreaming = draft != null,
+            focusItemId = focus?.let { ChatTimeline.itemFor(it, messages, items) },
+        )
+    }
+
+    fun compact() {
+        chatId.value?.let(runner::compact)
+    }
+
+    fun focusShown() {
+        pendingFocus.value = null
+    }
+
+    override fun onCleared() {
+        speaker.stop()
+        val unsent = pending.value.items - _editing.value?.original.orEmpty().toSet()
+        if (unsent.isNotEmpty()) appScope.launch { attachments.delete(unsent) }
+    }
+
+    data class MessageEdit(val messageId: String, val original: List<Attachment>, val previousText: String)
+
+    private data class PendingAttachments(val items: List<Attachment> = emptyList(), val importing: Int = 0)
+
+    private companion object {
+        const val STOP_TIMEOUT_MS = 5_000L
+        const val CHAT_ID_KEY = "chatId"
+    }
+}

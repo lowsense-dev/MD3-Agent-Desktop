@@ -1,0 +1,317 @@
+package dev.huecoder.md3agent.feature.settings
+
+import dev.huecoder.md3agent.LocalAppContainer
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
+import dev.huecoder.md3agent.ui.text.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
+import dev.huecoder.md3agent.R
+import dev.huecoder.md3agent.data.settings.FetchBackend
+import dev.huecoder.md3agent.data.settings.FetchSettings
+import dev.huecoder.md3agent.data.settings.FirecrawlSettings
+import dev.huecoder.md3agent.data.settings.SearchBackend
+import dev.huecoder.md3agent.data.settings.SearchSettings
+import dev.huecoder.md3agent.data.settings.ToolPermission
+import dev.huecoder.md3agent.data.settings.ToolSettings
+import dev.huecoder.md3agent.data.settings.WeatherSettings
+import dev.huecoder.md3agent.ui.components.FormField
+import dev.huecoder.md3agent.ui.components.FoldableHeader
+import dev.huecoder.md3agent.ui.components.rememberSectionFolds
+import dev.huecoder.md3agent.ui.theme.LayoutMotion
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import dev.huecoder.md3agent.ui.components.SaveAction
+import dev.huecoder.md3agent.ui.components.SearchField
+import dev.huecoder.md3agent.ui.components.SettingsScaffold
+import dev.huecoder.md3agent.ui.components.ShapeBadge
+import dev.huecoder.md3agent.ui.components.ToolCatalog
+import dev.huecoder.md3agent.ui.components.ToolCategory
+import dev.huecoder.md3agent.ui.components.ToolInfo
+import dev.huecoder.md3agent.ui.text.asString
+import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+
+@Composable
+fun ToolSettingsScreen(onBack: () -> Unit) {
+    val container = LocalAppContainer.current
+    val scope = rememberCoroutineScope()
+    var tools by remember { mutableStateOf<ToolSettings?>(null) }
+    var saved by remember { mutableStateOf<ToolSettings?>(null) }
+
+    LaunchedEffect(Unit) { container.settings.current().tools.let { saved = it.trimmed(); tools = it } }
+
+    val save = tools?.let { current ->
+        val draft = current.trimmed()
+        SaveAction(isDirty = draft != saved, canSave = current.search.isComplete(current.firecrawl) && current.fetch.isComplete(current.firecrawl)) {
+            scope.launch {
+                val written = container.settings.updateTools { persisted ->
+                    draft.copy(access = persisted.access, mcpServers = persisted.mcpServers, memory = persisted.memory)
+                }
+                if (!written) return@launch
+                saved = draft
+                onBack()
+            }
+        }
+    }
+
+    val folds = rememberSectionFolds(*ToolCategory.entries.map { it.name }.toTypedArray())
+    var query by rememberSaveable { mutableStateOf("") }
+
+    SettingsScaffold(stringResource(R.string.settings_tools), onBack, save = save) { padding ->
+        val current = tools ?: return@SettingsScaffold
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            SearchField(query, { query = it }, stringResource(R.string.tools_search_hint), Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+            ) {
+                ToolPermissionGroups(
+                    tools = container.tools.all,
+                    permissionOf = { container.tools.permission(it, current) },
+                    onChange = { tool, permission -> tools = current.withPermission(tool.spec.name, permission) },
+                    folds = folds,
+                    query = query,
+                ) { category ->
+                    if (category == ToolCategory.WEB) {
+                        ServiceCard(R.string.tools_section_search, Modifier.padding(top = 12.dp)) {
+                            SearchSection(current.search, current.firecrawl, { tools = current.copy(firecrawl = it) }) { tools = current.copy(search = it) }
+                        }
+                        ServiceCard(R.string.tools_section_fetch) {
+                            FetchSection(current.fetch, current.firecrawl, { tools = current.copy(firecrawl = it) }) { tools = current.copy(fetch = it) }
+                        }
+                        ServiceCard(R.string.tools_weather_title) {
+                            WeatherSection(current.weather) { tools = current.copy(weather = it) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ServiceCard(title: Int, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainer, modifier = modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(title), style = MaterialTheme.typography.titleMediumEmphasized)
+            content()
+        }
+    }
+}
+
+@Composable
+private fun SearchSection(
+    search: SearchSettings,
+    firecrawl: FirecrawlSettings,
+    onFirecrawlChange: (FirecrawlSettings) -> Unit,
+    onChange: (SearchSettings) -> Unit,
+) {
+    val backends = SearchBackend.entries
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+            backends.forEachIndexed { index, backend ->
+                SegmentedButton(
+                    selected = search.backend == backend,
+                    onClick = { onChange(search.copy(backend = backend)) },
+                    shape = SegmentedButtonDefaults.itemShape(index, backends.size),
+                    label = { Text(stringResource(backend.label)) },
+                )
+            }
+        }
+        Text(stringResource(search.backend.hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        when (search.backend) {
+            SearchBackend.HTML_SCRAPE -> Unit
+            SearchBackend.SEARXNG -> FormField(
+                value = search.searxngUrl,
+                onValueChange = { onChange(search.copy(searxngUrl = it)) },
+                label = stringResource(R.string.tools_searxng_url),
+                placeholder = stringResource(R.string.tools_searxng_url_placeholder),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            SearchBackend.BRAVE_API -> FormField(
+                value = search.apiKey,
+                onValueChange = { onChange(search.copy(apiKey = it)) },
+                label = stringResource(R.string.tools_search_api_key),
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            SearchBackend.FIRECRAWL -> FirecrawlFields(firecrawl, onFirecrawlChange)
+        }
+    }
+}
+
+@Composable
+private fun FetchSection(
+    fetch: FetchSettings,
+    firecrawl: FirecrawlSettings,
+    onFirecrawlChange: (FirecrawlSettings) -> Unit,
+    onChange: (FetchSettings) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        SegmentedChoices(FETCH_CHOICES, fetch.backend, onSelect = { onChange(fetch.copy(backend = it)) })
+        Text(stringResource(fetch.backend.hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        when (fetch.backend) {
+            FetchBackend.DIRECT -> Unit
+            FetchBackend.JINA_READER -> SecretField(fetch.jinaApiKey) { onChange(fetch.copy(jinaApiKey = it)) }
+            FetchBackend.CUSTOM -> {
+                FormField(
+                    value = fetch.customUrl,
+                    onValueChange = { onChange(fetch.copy(customUrl = it)) },
+                    label = stringResource(R.string.tools_fetch_custom_url),
+                    placeholder = stringResource(R.string.tools_fetch_custom_url_placeholder),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                SecretField(fetch.customApiKey) { onChange(fetch.copy(customApiKey = it)) }
+            }
+            FetchBackend.FIRECRAWL -> FirecrawlFields(firecrawl, onFirecrawlChange)
+        }
+    }
+}
+
+@Composable
+private fun FirecrawlFields(firecrawl: FirecrawlSettings, onChange: (FirecrawlSettings) -> Unit) {
+    FormField(
+        value = firecrawl.baseUrl,
+        onValueChange = { onChange(firecrawl.copy(baseUrl = it)) },
+        label = stringResource(R.string.tools_firecrawl_url),
+        placeholder = stringResource(R.string.tools_firecrawl_url_placeholder),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+        modifier = Modifier.fillMaxWidth(),
+    )
+    FormField(
+        value = firecrawl.apiKey,
+        onValueChange = { onChange(firecrawl.copy(apiKey = it)) },
+        label = stringResource(R.string.tools_firecrawl_api_key),
+        visualTransformation = PasswordVisualTransformation(),
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun SecretField(value: String, onChange: (String) -> Unit) {
+    FormField(
+        value = value,
+        onValueChange = onChange,
+        label = stringResource(R.string.tools_fetch_api_key),
+        visualTransformation = PasswordVisualTransformation(),
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+private val FETCH_CHOICES = listOf(
+    Choice(FetchBackend.DIRECT, R.string.tools_fetch_backend_direct),
+    Choice(FetchBackend.JINA_READER, R.string.tools_fetch_backend_jina),
+    Choice(FetchBackend.CUSTOM, R.string.tools_fetch_backend_custom),
+    Choice(FetchBackend.FIRECRAWL, R.string.tools_backend_firecrawl),
+)
+
+private val FetchBackend.hint: Int
+    get() = when (this) {
+        FetchBackend.DIRECT -> R.string.tools_fetch_backend_direct_hint
+        FetchBackend.JINA_READER -> R.string.tools_fetch_backend_jina_hint
+        FetchBackend.CUSTOM -> R.string.tools_fetch_backend_custom_hint
+        FetchBackend.FIRECRAWL -> R.string.tools_fetch_backend_firecrawl_hint
+    }
+
+private fun FetchSettings.isComplete(firecrawl: FirecrawlSettings): Boolean = when (backend) {
+    FetchBackend.CUSTOM -> customUrl.isNotBlank()
+    FetchBackend.FIRECRAWL -> firecrawl.isComplete()
+    else -> true
+}
+
+private fun FirecrawlSettings.isComplete(): Boolean {
+    val url = baseUrl.trim().toHttpUrlOrNull() ?: return false
+    return apiKey.isNotBlank() || url.host != FirecrawlSettings.DEFAULT_BASE_URL.toHttpUrl().host
+}
+
+@Composable
+private fun WeatherSection(weather: WeatherSettings, onChange: (WeatherSettings) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            stringResource(R.string.tools_weather_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        FormField(
+            value = weather.forecastUrl,
+            onValueChange = { onChange(weather.copy(forecastUrl = it)) },
+            label = stringResource(R.string.tools_weather_forecast_url),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        FormField(
+            value = weather.geocodingUrl,
+            onValueChange = { onChange(weather.copy(geocodingUrl = it)) },
+            label = stringResource(R.string.tools_weather_geocoding_url),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+private val SearchBackend.label: Int
+    get() = when (this) {
+        SearchBackend.HTML_SCRAPE -> R.string.tools_search_backend_html
+        SearchBackend.SEARXNG -> R.string.tools_search_backend_searxng
+        SearchBackend.BRAVE_API -> R.string.tools_search_backend_brave
+        SearchBackend.FIRECRAWL -> R.string.tools_backend_firecrawl
+    }
+
+private val SearchBackend.hint: Int
+    get() = when (this) {
+        SearchBackend.HTML_SCRAPE -> R.string.tools_search_backend_html_hint
+        SearchBackend.SEARXNG -> R.string.tools_search_backend_searxng_hint
+        SearchBackend.BRAVE_API -> R.string.tools_search_backend_brave_hint
+        SearchBackend.FIRECRAWL -> R.string.tools_search_backend_firecrawl_hint
+    }
+
+private fun SearchSettings.isComplete(firecrawl: FirecrawlSettings): Boolean = when (backend) {
+    SearchBackend.HTML_SCRAPE -> true
+    SearchBackend.SEARXNG -> searxngUrl.isNotBlank()
+    SearchBackend.BRAVE_API -> apiKey.isNotBlank()
+    SearchBackend.FIRECRAWL -> firecrawl.isComplete()
+}
+
+private fun ToolSettings.trimmed() = copy(
+    search = search.copy(searxngUrl = search.searxngUrl.trim(), apiKey = search.apiKey.trim()),
+    weather = weather.copy(forecastUrl = weather.forecastUrl.trim(), geocodingUrl = weather.geocodingUrl.trim()),
+    fetch = fetch.copy(jinaApiKey = fetch.jinaApiKey.trim(), customUrl = fetch.customUrl.trim(), customApiKey = fetch.customApiKey.trim()),
+    firecrawl = firecrawl.copy(baseUrl = firecrawl.baseUrl.trim(), apiKey = firecrawl.apiKey.trim()),
+)
+

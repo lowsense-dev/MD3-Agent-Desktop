@@ -87,11 +87,15 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 /** Everything the app is made of, built once per process. */
-class AppContainer(val paths: AppPaths = AppPaths(), launcher: String = "md3-agent") {
+class AppContainer(
+    val paths: AppPaths = AppPaths(),
+    launcher: String = "md3-agent",
+    val bus: SessionBus = SessionBus.connect(),
+    systemdTimers: Boolean = true,
+) {
     // Background work must never take the whole app down; failures are logged where they were not already handled.
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, e -> Log.e("AppContainer", "Background task failed", e) })
 
-    val bus = SessionBus.connect()
     val hapticEngine = dev.huecoder.md3agent.ui.haptics.HapticEngine()
     val settings = SettingsRepository(paths, SecretCipher(ChosenKeyStore(paths.config) { SecretServiceStore(bus) }), applicationScope)
     val httpClients = HttpClientProvider(settings.networkSettings, applicationScope)
@@ -114,7 +118,7 @@ class AppContainer(val paths: AppPaths = AppPaths(), launcher: String = "md3-age
     val reminderAlarms = DesktopReminderAlarms(
         notify = { title, body, actions, onAction -> notifier.show(title, body, actions, onAction) },
         timers = SystemdTimers(File(System.getProperty("user.home"), ".config/systemd/user"), launcher) { ProcessRunner.run(it, SYSTEMCTL_TIMEOUT_MS) }
-            .takeIf { it.available() },
+            .takeIf { systemdTimers && it.available() },
         scope = applicationScope,
     )
     val reminders = ReminderRepository(database.reminderDao(), reminderAlarms)
@@ -178,6 +182,17 @@ class AppContainer(val paths: AppPaths = AppPaths(), launcher: String = "md3-age
     )
 
     val updates = UpdateChecker(httpClients, BuildConfig.VERSION_NAME)
+
+    fun newVoiceRecorder() = dev.huecoder.md3agent.voice.VoiceRecorder(paths.cache)
+
+    fun newSpeechSynthesizer(voice: dev.huecoder.md3agent.data.settings.VoiceSettings, agent: dev.huecoder.md3agent.data.settings.AgentProfile): dev.huecoder.md3agent.voice.SpeechSynthesizer {
+        val provider = voice.speechProviderFor(agent.voice)
+        return if (provider != null) {
+            dev.huecoder.md3agent.voice.ProviderSpeechSynthesizer(httpClients, provider, paths.cache.apply { mkdirs() })
+        } else {
+            dev.huecoder.md3agent.voice.SystemSpeechSynthesizer(voice.language)
+        }
+    }
 
     private suspend fun saveMcpSession(serverId: String, session: McpOAuthSession) = settings.updateTools { tools ->
         tools.copy(mcpServers = tools.mcpServers.map { if (it.id == serverId) it.copy(oauth = session) else it })

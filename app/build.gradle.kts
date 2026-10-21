@@ -61,7 +61,7 @@ val generateR by tasks.registering {
         val dir = out.get().asFile.resolve("dev/huecoder/md3agent").apply { mkdirs() }
         dir.resolve("R.kt").writeText(text)
         dir.resolve("BuildConfig.kt").writeText(
-            "package dev.huecoder.md3agent\n\nobject BuildConfig {\n    const val VERSION_NAME: String = \"$version\"\n}\n",
+            "package dev.huecoder.md3agent\n\nobject BuildConfig {\n    const val VERSION_NAME: String = \"$version\"\n    const val VERSION_CODE: Int = 1\n}\n",
         )
     }
 }

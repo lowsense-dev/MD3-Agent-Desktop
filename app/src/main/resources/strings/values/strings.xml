@@ -324,9 +324,9 @@
     <string name="chat_tool_command">Command %1$s</string>
     <string name="settings_access">Access and permissions</string>
     <string name="access_section_shell">Commands</string>
-    <string name="access_shell_hint">Where the assistant runs shell commands. The assistant is told which one you picked, so it knows what it can reach.</string>
-    <string name="access_mode_sandbox">App sandbox</string>
-    <string name="access_mode_sandbox_summary">Built-in shell, only the app\'s own files</string>
+    <string name="access_shell_hint">Where the assistant runs commands and Python. It is told which one you picked, so it knows what it can reach.</string>
+    <string name="access_mode_sandbox">Sandbox</string>
+    <string name="access_mode_sandbox_summary">bubblewrap, only the agent\'s workspace</string>
     <string name="access_mode_termux">Termux</string>
     <string name="access_mode_termux_summary">Bash with Termux packages</string>
     <string name="access_mode_shizuku">Shizuku</string>
@@ -370,9 +370,9 @@
     </plurals>
     <string name="chat_attachment_no_viewer">No app can open %1$s</string>
     <string name="access_section_files">Files</string>
-    <string name="access_files_hint">Which files the assistant can read, write and send you. Its workspace is the same folder the sandbox shell starts in.</string>
-    <string name="access_files_app">App folder</string>
-    <string name="access_files_app_summary">Workspace and chat attachments only</string>
+    <string name="access_files_hint">Which files the assistant can read, write and show you. Its workspace is %1$s.</string>
+    <string name="access_files_app">Workspace</string>
+    <string name="access_files_app_summary">Agent workspace and chat attachments only</string>
     <string name="access_files_shared">Phone storage</string>
     <string name="access_files_shared_summary">Download, DCIM, Documents and the rest, no root</string>
     <string name="access_files_root">Root</string>
@@ -845,4 +845,33 @@
     <string name="reminder_action_stop">Stop</string>
     <string name="reminder_action_snooze">Snooze 10 min</string>
     <string name="alarm_notification_title">Alarm</string>
+    <plurals name="files_copied_to_clipboard">
+        <item quantity="one">%d file copied, paste it where you need it</item>
+        <item quantity="other">%d files copied, paste them where you need them</item>
+    </plurals>
+    <string name="access_mode_system">System</string>
+    <string name="access_mode_system_summary">Your own bash, everything you can reach</string>
+    <string name="access_files_home">Home folder</string>
+    <string name="access_files_home_summary">Everything in your home folder</string>
+    <string name="access_sandbox_network">Network in the sandbox</string>
+    <string name="access_sandbox_network_summary">Sandboxed commands and scripts may go online</string>
+    <string name="access_section_environment">This computer</string>
+    <string name="access_environment_hint">What MD3 Agent found on %1$s. A missing part only turns off what needs it.</string>
+    <string name="access_component_found">Found</string>
+    <string name="access_component_missing">Not found</string>
+    <string name="access_install_hint">Install: %1$s</string>
+    <string name="env_bwrap">Sandbox (bubblewrap)</string>
+    <string name="env_python">Python 3</string>
+    <string name="env_python_venv">Python venv, for pip packages</string>
+    <string name="env_wl_paste">Pasting files on Wayland (wl-paste)</string>
+    <string name="env_xclip">Pasting files on X11 (xclip)</string>
+    <string name="env_portal">System file picker (xdg-desktop-portal)</string>
+    <string name="env_secret_service">Keyring for API keys (Secret Service)</string>
+    <string name="env_notifications">Notifications</string>
+    <string name="env_systemd_user">Reminders while the app is closed (systemd)</string>
+    <string name="env_speech">System speech (speech-dispatcher)</string>
+    <string name="access_section_shortcut">Quick question window</string>
+    <string name="access_shortcut_hint">Bind this command to a keyboard shortcut in your desktop settings:</string>
+    <string name="access_shortcut_bound">Bound through the desktop: %1$s</string>
+    <string name="access_recheck">Check again</string>
 </resources>
