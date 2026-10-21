@@ -44,6 +44,18 @@ fun AppearanceScreen(onBack: () -> Unit) {
                 onSelect = { mode -> viewModel.updateInterface { it.copy(theme = mode) } },
                 hint = stringResource(R.string.appearance_theme_hint),
             )
+            SectionHeader(stringResource(R.string.appearance_section_language))
+            ChoiceRow(
+                title = stringResource(R.string.appearance_language),
+                choices = listOf(
+                    Choice(dev.huecoder.md3agent.data.settings.AppLanguage.SYSTEM, R.string.appearance_language_system),
+                    Choice(dev.huecoder.md3agent.data.settings.AppLanguage.ENGLISH, R.string.appearance_language_english),
+                    Choice(dev.huecoder.md3agent.data.settings.AppLanguage.RUSSIAN, R.string.appearance_language_russian),
+                ),
+                selected = current.ui.language,
+                onSelect = { language -> viewModel.updateInterface { it.copy(language = language) } },
+                hint = stringResource(R.string.appearance_language_hint),
+            )
         }
     }
 }

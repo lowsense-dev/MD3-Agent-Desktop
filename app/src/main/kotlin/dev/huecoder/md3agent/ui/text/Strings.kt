@@ -126,3 +126,13 @@ fun pluralStringResource(id: Int, count: Int, vararg args: Any): String {
     val key = args.toList()
     return remember(id, count, key, Strings.locale) { Strings.plural(id, count, *args) }
 }
+
+/**
+ * The language the session asks for, from LC_ALL, LC_MESSAGES or LANG in that order (as glibc reads them). Java only
+ * honours these when the matching locale is generated, so a ru_RU session without ru_RU in locale.gen still gets Russian.
+ */
+fun systemLocale(env: Map<String, String> = System.getenv(), fallback: Locale = Locale.getDefault()): Locale {
+    val value = listOf("LC_ALL", "LC_MESSAGES", "LANG").firstNotNullOfOrNull { key -> env[key]?.takeIf { it.isNotBlank() } } ?: return fallback
+    val language = value.substringBefore('.').substringBefore('@').substringBefore('_').lowercase()
+    return if (language.length !in 2..3 || language == "c" || language == "posix") fallback else Locale.forLanguageTag(language)
+}

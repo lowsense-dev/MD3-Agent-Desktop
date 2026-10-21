@@ -887,10 +887,10 @@
     <string name="wide_empty_detail">Выбери чат слева или начни новый</string>
     <string name="appearance_section_theme">Тема</string>
     <string name="appearance_theme">Светлая или тёмная</string>
-    <string name="appearance_theme_system">Системная</string>
+    <string name="appearance_theme_system">Авто</string>
     <string name="appearance_theme_light">Светлая</string>
     <string name="appearance_theme_dark">Тёмная</string>
-    <string name="appearance_theme_hint">Системная следует за настройкой окружения, если оно её сообщает, иначе тема светлая.</string>
+    <string name="appearance_theme_hint">Авто следует за настройкой окружения, если оно её сообщает, иначе тема светлая.</string>
     <string name="overlay_title">MD3 Agent: быстрый вопрос</string>
     <string name="overlay_expand">Открыть в приложении</string>
     <string name="alarm_missed_hint">Сработало, пока компьютер или приложение были выключены.</string>
@@ -918,4 +918,8 @@
     <string name="mcp_server_command">Команда</string>
     <string name="mcp_server_command_placeholder">npx -y @modelcontextprotocol/server-filesystem ~/Documents</string>
     <string name="mcp_server_command_hint">Запускается через твою оболочку, общение через stdin/stdout; останавливается, когда приложение закрывается.</string>
+    <string name="appearance_section_language">Язык</string>
+    <string name="appearance_language">Язык интерфейса</string>
+    <string name="appearance_language_system">Авто</string>
+    <string name="appearance_language_hint">Авто — язык, в котором запущена сессия (переменная LANG).</string>
 </resources>

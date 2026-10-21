@@ -26,6 +26,8 @@ fun main(args: Array<String>) {
     if (socket.tryForward(command)) exitProcess(0)
 
     val container = AppContainer(paths, launcher = System.getProperty("md3agent.launcher") ?: "md3-agent")
+    // The first frame already in the chosen language, not $LANG for a moment.
+    dev.huecoder.md3agent.ui.text.Strings.locale = kotlinx.coroutines.runBlocking { container.settings.current().ui.language }.locale(dev.huecoder.md3agent.app.SYSTEM_LOCALE)
     val windows = AppWindows()
     val handle: (LaunchCommand) -> Unit = { next ->
         when (next) {

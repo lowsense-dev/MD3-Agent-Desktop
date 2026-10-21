@@ -908,4 +908,10 @@
     <string name="mcp_server_command">Command</string>
     <string name="mcp_server_command_placeholder">npx -y @modelcontextprotocol/server-filesystem ~/Documents</string>
     <string name="mcp_server_command_hint">Started through your login shell and spoken to over stdin/stdout; it stops when the app closes.</string>
+    <string name="appearance_section_language">Language</string>
+    <string name="appearance_language">Interface language</string>
+    <string name="appearance_language_system">System</string>
+    <string name="appearance_language_hint">System follows the language your desktop session runs in ($LANG).</string>
+    <string name="appearance_language_english" translatable="false">English</string>
+    <string name="appearance_language_russian" translatable="false">Русский</string>
 </resources>

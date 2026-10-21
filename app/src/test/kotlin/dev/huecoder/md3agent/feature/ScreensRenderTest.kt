@@ -109,4 +109,12 @@ class ScreensRenderTest {
         }
         assertNotBlank("import", import)
     }
+
+    @Test
+    fun rendersAppearanceWithLanguagePicker() {
+        val image = renderScreen("appearance", 420, 1000, frames = 8) {
+            TestApp(container) { dev.huecoder.md3agent.feature.settings.AppearanceScreen(onBack = {}) }
+        }
+        assertNotBlank("appearance", image)
+    }
 }

@@ -24,6 +24,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -64,6 +65,7 @@ import com.composables.icons.materialsymbols.rounded.Alarm
 import dev.huecoder.md3agent.AppContainer
 import dev.huecoder.md3agent.LocalAppContainer
 import dev.huecoder.md3agent.R
+import dev.huecoder.md3agent.data.settings.AppLanguage
 import dev.huecoder.md3agent.data.settings.ThemeMode
 import dev.huecoder.md3agent.feature.chat.ChatScreen
 import dev.huecoder.md3agent.platform.AppEvents
@@ -134,6 +136,9 @@ private fun AppRootContent(container: AppContainer, snackbar: SnackbarHostState,
         ThemeMode.DARK -> true
         ThemeMode.SYSTEM -> systemDark ?: false
     }
+    val language = ui?.language ?: AppLanguage.SYSTEM
+    // Strings read the locale while composing, so it is set before the content below is (re)built for the new language.
+    remember(language) { Strings.locale = language.locale(SYSTEM_LOCALE) }
     val scope = rememberCoroutineScope()
     val platform = remember(container) { PlatformContext(container) { text -> scope.launch { snackbar.showSnackbar(text) } } }
     LaunchedEffect(container) { container.notices.collect { snackbar.showSnackbar(it) } }
@@ -146,7 +151,7 @@ private fun AppRootContent(container: AppContainer, snackbar: SnackbarHostState,
             ProvideAgentLook {
                 ProvideHaptics {
                     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
-                        content()
+                        key(language) { content() }
                         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = 96.dp))
                     }
                 }
@@ -313,6 +318,9 @@ private object WindowIcon {
         androidx.compose.ui.graphics.painter.BitmapPainter(org.jetbrains.skia.Image.makeFromEncoded(bytes).toComposeImageBitmap())
     }
 }
+
+/** The locale the JVM started with ($LANG), kept before the app overrides Strings.locale. */
+val SYSTEM_LOCALE: java.util.Locale = dev.huecoder.md3agent.ui.text.systemLocale()
 
 private const val MIN_WIDTH = 380
 private const val MIN_HEIGHT = 520
