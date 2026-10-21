@@ -8,6 +8,8 @@ data class InterfaceSettings(
     val hapticStrength: Float = DEFAULT_HAPTIC_STRENGTH,
     val swipeRight: SwipeAction = SwipeAction.TRASH,
     val swipeLeft: SwipeAction = SwipeAction.ARCHIVE,
+    /** SYSTEM follows the desktop's dark-mode setting when it shares one, else light. */
+    val theme: ThemeMode = ThemeMode.SYSTEM,
 ) {
     companion object {
         const val DEFAULT_HAPTIC_STRENGTH = 0.85f
@@ -17,3 +19,6 @@ data class InterfaceSettings(
 
 @Serializable
 enum class SwipeAction { NONE, TRASH, ARCHIVE, MOVE }
+
+@Serializable
+enum class ThemeMode { SYSTEM, LIGHT, DARK }

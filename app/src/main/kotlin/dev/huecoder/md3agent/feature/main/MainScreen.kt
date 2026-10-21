@@ -66,6 +66,14 @@ fun MainScreen(
     }
 
     BackHandler(enabled = tab != MainTab.CHATS) { open(MainTab.CHATS) }
+    LaunchedEffect(pager) {
+        dev.huecoder.md3agent.platform.AppEvents.shortcuts.collect { shortcut ->
+            when (shortcut) {
+                dev.huecoder.md3agent.platform.AppShortcut.SETTINGS -> open(MainTab.SETTINGS)
+                dev.huecoder.md3agent.platform.AppShortcut.SEARCH -> open(MainTab.CHATS)
+            }
+        }
+    }
 
     Box(Modifier.fillMaxSize().nestedScroll(collapseOnScroll)) {
         // All three tabs stay composed: switching then only slides finished screens instead of building one mid-animation

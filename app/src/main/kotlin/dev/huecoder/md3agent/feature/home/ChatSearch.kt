@@ -56,6 +56,9 @@ fun ChatSearch(onOpenChat: (String) -> Unit, onOpenMessage: (chatId: String, mes
     val recent by viewModel.recent.collectAsStateWithLifecycle()
     val text = rememberTextFieldState()
     val bar = rememberSearchBarState()
+    androidx.compose.runtime.LaunchedEffect(bar) {
+        dev.huecoder.md3agent.platform.AppEvents.shortcuts.collect { if (it == dev.huecoder.md3agent.platform.AppShortcut.SEARCH) bar.animateToExpanded() }
+    }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(text) { snapshotFlow { text.text.toString() }.collect(viewModel::setQuery) }

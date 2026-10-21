@@ -32,17 +32,17 @@ fun AppearanceScreen(onBack: () -> Unit) {
             SectionHeader(stringResource(R.string.appearance_section_chat_list))
             SwipeActionDropdown(R.string.appearance_swipe_right, current.ui.swipeRight) { action -> viewModel.updateInterface { it.copy(swipeRight = action) } }
             SwipeActionDropdown(R.string.appearance_swipe_left, current.ui.swipeLeft) { action -> viewModel.updateInterface { it.copy(swipeLeft = action) } }
-            SectionHeader(stringResource(R.string.appearance_section_feedback))
-            LabeledSwitch(
-                title = stringResource(R.string.appearance_haptics),
-                summary = stringResource(R.string.appearance_haptics_summary),
-                checked = current.ui.haptics,
-                onCheckedChange = { value -> viewModel.updateInterface { it.copy(haptics = value) } },
-            )
-            HapticStrengthSlider(
-                strength = current.ui.hapticStrength,
-                enabled = current.ui.haptics,
-                onChange = { value -> viewModel.updateInterface { it.copy(hapticStrength = value) } },
+            SectionHeader(stringResource(R.string.appearance_section_theme))
+            ChoiceRow(
+                title = stringResource(R.string.appearance_theme),
+                choices = listOf(
+                    Choice(dev.huecoder.md3agent.data.settings.ThemeMode.SYSTEM, R.string.appearance_theme_system),
+                    Choice(dev.huecoder.md3agent.data.settings.ThemeMode.LIGHT, R.string.appearance_theme_light),
+                    Choice(dev.huecoder.md3agent.data.settings.ThemeMode.DARK, R.string.appearance_theme_dark),
+                ),
+                selected = current.ui.theme,
+                onSelect = { mode -> viewModel.updateInterface { it.copy(theme = mode) } },
+                hint = stringResource(R.string.appearance_theme_hint),
             )
         }
     }

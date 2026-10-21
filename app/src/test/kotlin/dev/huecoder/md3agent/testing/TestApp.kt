@@ -56,3 +56,10 @@ fun TestApp(container: AppContainer, dark: Boolean = false, content: @Composable
         }
     }
 }
+
+/** Lifecycle and view-model owners, as a window provides them, for content that brings its own navigation. */
+@Composable
+fun TestOwners(content: @Composable () -> Unit) {
+    val owner = TestOwner()
+    CompositionLocalProvider(LocalLifecycleOwner provides owner, LocalViewModelStoreOwner provides owner, content = content)
+}

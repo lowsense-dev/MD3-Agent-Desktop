@@ -7,6 +7,7 @@ import dev.huecoder.md3agent.feature.chat.ChatScreen
 import dev.huecoder.md3agent.feature.home.HomeScreen
 import dev.huecoder.md3agent.feature.settings.AccessScreen
 import dev.huecoder.md3agent.testing.TestApp
+import dev.huecoder.md3agent.testing.TestOwners
 import dev.huecoder.md3agent.testing.renderScreen
 import dev.huecoder.md3agent.testing.testContainer
 import dev.huecoder.md3agent.ui.text.Strings
@@ -76,5 +77,20 @@ class ScreensRenderTest {
             TestApp(container) { AccessScreen(onBack = {}) }
         }
         assertNotBlank("access", image)
+    }
+
+    @Test
+    fun rendersWideAndNarrowAppLayouts() {
+        seededChat()
+        listOf("app-wide" to (1280 to 800), "app-narrow" to (420 to 900)).forEach { (name, size) ->
+            val image = renderScreen(name, size.first, size.second, frames = 12) {
+                TestOwners {
+                    dev.huecoder.md3agent.app.AppRoot(container, androidx.compose.material3.SnackbarHostState()) {
+                        dev.huecoder.md3agent.ui.navigation.AppNavHost(chatToOpen = null, onChatOpened = {})
+                    }
+                }
+            }
+            assertNotBlank(name, image)
+        }
     }
 }

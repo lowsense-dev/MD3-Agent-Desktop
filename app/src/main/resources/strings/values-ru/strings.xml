@@ -884,4 +884,14 @@
     <string name="access_shortcut_hint">Назначьте эту команду на сочетание клавиш в настройках вашего окружения:</string>
     <string name="access_shortcut_bound">Назначено через окружение: %1$s</string>
     <string name="access_recheck">Проверить снова</string>
+    <string name="wide_empty_detail">Выберите чат слева или начните новый</string>
+    <string name="appearance_section_theme">Тема</string>
+    <string name="appearance_theme">Светлая или тёмная</string>
+    <string name="appearance_theme_system">Системная</string>
+    <string name="appearance_theme_light">Светлая</string>
+    <string name="appearance_theme_dark">Тёмная</string>
+    <string name="appearance_theme_hint">Системная следует за настройкой окружения, если оно её сообщает, иначе тема светлая.</string>
+    <string name="overlay_title">MD3 Agent: быстрый вопрос</string>
+    <string name="overlay_expand">Открыть в приложении</string>
+    <string name="alarm_missed_hint">Сработало, пока компьютер или приложение были выключены.</string>
 </resources>

@@ -51,6 +51,8 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.huecoder.md3agent.LocalAppContainer
 import dev.huecoder.md3agent.R
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
+import androidx.compose.ui.draganddrop.dragData
 import dev.huecoder.md3agent.data.settings.TypingStyle
 import dev.huecoder.md3agent.conversation.ApprovalDecision
 import dev.huecoder.md3agent.feature.chat.lightbox.LightboxHost
@@ -152,7 +154,9 @@ fun ChatScreen(chatId: String?, onBack: () -> Unit, onOpenChat: (String) -> Unit
 
     ProvideAgentLook(state.agentId) {
         LightboxHost {
+            val dropTarget = remember(viewModel) { FileDropTarget(viewModel::attach) }
             Scaffold(
+                modifier = Modifier.dragAndDropTarget(shouldStartDragAndDrop = { true }, target = dropTarget),
                 topBar = {
                     ChatTopBar(
                         title = state.title.asString(),
@@ -409,3 +413,15 @@ private val TOP_FADE_SOLID_GAP = 16.dp
 
 
 private val ComposerClearance = 104.dp
+
+/** Files dragged from a file manager onto the chat are attached like picked ones. */
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+private class FileDropTarget(private val onFiles: (List<java.io.File>) -> Unit) : androidx.compose.ui.draganddrop.DragAndDropTarget {
+    override fun onDrop(event: androidx.compose.ui.draganddrop.DragAndDropEvent): Boolean {
+        val data = event.dragData() as? androidx.compose.ui.draganddrop.DragData.FilesList ?: return false
+        val files = dev.huecoder.md3agent.system.clipboard.ClipboardParser.uriList(data.readFiles().joinToString("\n"))
+        if (files.isEmpty()) return false
+        onFiles(files)
+        return true
+    }
+}
