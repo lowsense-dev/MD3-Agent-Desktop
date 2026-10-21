@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-val appVersion = "1.0.0"
+val appVersion = "0.1.0"
 version = appVersion
 
 kotlin {

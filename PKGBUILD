@@ -1,7 +1,7 @@
 # Maintainer: lowsense-dev <128370358+lowsense-dev@users.noreply.github.com>
 # Local package of this checkout: run makepkg -si in the repository root.
 pkgname=md3-agent
-pkgver=1.0.0
+pkgver=0.1.0
 pkgrel=1
 pkgdesc="AI assistant with tools, MCP and long-term memory"
 arch=('x86_64')

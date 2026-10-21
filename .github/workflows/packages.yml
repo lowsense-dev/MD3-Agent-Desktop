@@ -1,5 +1,6 @@
 # Tests, then one runnable folder (jar + jlinked runtime), then a package per format, each installed and started
-# (--version, --check-environment) on its own distribution. Tags v* publish the packages as a release.
+# (--version, --check-environment) on its own distribution; the AppImage also on an older one. Tags v* publish them
+# as a GitHub release.
 name: Packages
 
 on:
@@ -126,9 +127,59 @@ jobs:
           name: pacman
           path: dist/*.pkg.tar.zst
 
+  appimage:
+    needs: dist
+    runs-on: ubuntu-24.04
+    env:
+      APPIMAGETOOL_URL: https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+      APPIMAGETOOL_SHA256: ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0
+      # Runners have no FUSE: AppImages (appimagetool itself and ours) unpack and run instead of mounting.
+      APPIMAGE_EXTRACT_AND_RUN: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+      - run: mkdir -p dist && tar -xzf md3-agent-dist.tar.gz -C dist
+      - name: appimagetool (pinned, checksum verified)
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -fsSL -o "$RUNNER_TEMP/bin/appimagetool" "$APPIMAGETOOL_URL"
+          echo "$APPIMAGETOOL_SHA256  $RUNNER_TEMP/bin/appimagetool" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/bin/appimagetool"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Build AppImage
+        run: packaging/appimage/build-appimage.sh
+      - name: Start
+        run: |
+          chmod +x dist/*.AppImage
+          ./dist/MD3_Agent-*-x86_64.AppImage --version
+          ./dist/MD3_Agent-*-x86_64.AppImage --check-environment
+      - uses: actions/upload-artifact@v7
+        with:
+          name: appimage
+          path: dist/*.AppImage
+
+  # The point of an AppImage is running anywhere: start it on a different, older distribution than it was built on.
+  appimage-portable:
+    needs: appimage
+    runs-on: ubuntu-24.04
+    container: debian:12
+    env:
+      APPIMAGE_EXTRACT_AND_RUN: "1"
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: appimage
+      - name: Start on Debian 12
+        run: |
+          chmod +x MD3_Agent-*-x86_64.AppImage
+          ./MD3_Agent-*-x86_64.AppImage --version
+          ./MD3_Agent-*-x86_64.AppImage --check-environment
+
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [deb, rpm, pacman]
+    needs: [deb, rpm, pacman, appimage-portable]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -138,7 +189,9 @@ jobs:
           path: artifacts
       - uses: softprops/action-gh-release@v3
         with:
+          generate_release_notes: true
           files: |
             artifacts/deb/*.deb
             artifacts/rpm/*.rpm
             artifacts/pacman/*.pkg.tar.zst
+            artifacts/appimage/*.AppImage
