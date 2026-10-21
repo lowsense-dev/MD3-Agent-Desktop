@@ -71,3 +71,6 @@ data class FolderRoute(val root: String, val path: String = "", val fromChats: B
 
 @Serializable
 data object MediaRoute
+
+@Serializable
+data object ImportRoute

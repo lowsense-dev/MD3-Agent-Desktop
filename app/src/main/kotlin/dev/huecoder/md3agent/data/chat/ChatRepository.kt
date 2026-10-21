@@ -60,6 +60,12 @@ class ChatRepository(
 
     suspend fun history(chatId: String): List<MessageEntity> = messageDao.listForChat(chatId)
 
+    /** Every chat that is not in the trash, for export. */
+    suspend fun allChats(): List<ChatEntity> = chatDao.listAll()
+
+    /** Puts back a chat exported elsewhere, keeping its ids. */
+    suspend fun restoreChat(chat: ChatEntity, messages: List<MessageEntity>) = chatDao.insertWithMessages(chat, messages)
+
     suspend fun createChat(title: String, selection: ModelSelection, agentId: String): ChatEntity {
         val now = clock()
         val chat = ChatEntity(

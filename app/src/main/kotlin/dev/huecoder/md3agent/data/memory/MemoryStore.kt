@@ -26,6 +26,11 @@ class MemoryStore(
 
     suspend fun get(id: String): MemoryEntity? = dao.get(id.trim().lowercase())
 
+    suspend fun all(): List<MemoryEntity> = MemoryTier.entries.flatMap { dao.listTier(it) }
+
+    /** Puts back a memory exported elsewhere, keeping its id. */
+    suspend fun restore(memory: MemoryEntity) = dao.upsert(memory)
+
     suspend fun save(tier: MemoryTier, title: String, content: String): MemoryEntity {
         val now = clock()
         val memory = validated(MemoryEntity(newId(), tier, title.trim(), content.trim(), now, now))

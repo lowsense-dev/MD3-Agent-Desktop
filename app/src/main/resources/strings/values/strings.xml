@@ -884,4 +884,23 @@
     <string name="overlay_title">MD3 Agent: quick question</string>
     <string name="overlay_expand">Open in app</string>
     <string name="alarm_missed_hint">This went off while the computer or the app was off.</string>
+    <string name="settings_import">Import from phone</string>
+    <string name="settings_import_summary">Providers, keys, agents, memory and chats from MD3 Agent on Android</string>
+    <string name="import_hint">On the phone open Settings → Export for PC, choose a password and save the file. Copy it here, then pick it below.</string>
+    <string name="import_choose_file">Choose file</string>
+    <string name="import_password">Password</string>
+    <string name="import_read">Read the file</string>
+    <string name="import_apply">Import</string>
+    <string name="import_new_items">Will be added: %1$d</string>
+    <string name="import_conflicts">Already here, tick what the phone\'s version should replace:</string>
+    <string name="import_kind_provider">Provider</string>
+    <string name="import_kind_agent">Agent</string>
+    <string name="import_kind_mcp">MCP server</string>
+    <string name="import_kind_memory">Memory</string>
+    <string name="import_kind_chat">Chat</string>
+    <string name="import_kind_settings">Settings: network, chat, voice, interface and tool options</string>
+    <string name="import_done">Imported</string>
+    <string name="import_error_password">Wrong password</string>
+    <string name="import_error_format">This file is from a newer version of MD3 Agent</string>
+    <string name="import_error_file">This is not an MD3 Agent export, or the file is damaged</string>
 </resources>

@@ -13,6 +13,7 @@ import androidx.room.PrimaryKey
     indices = [Index("updatedAt"), Index("folderId")],
     foreignKeys = [ForeignKey(entity = FolderEntity::class, parentColumns = ["id"], childColumns = ["folderId"], onDelete = ForeignKey.SET_NULL)],
 )
+@kotlinx.serialization.Serializable
 data class ChatEntity(
     @PrimaryKey val id: String,
     val title: String,
@@ -61,6 +62,7 @@ enum class MessageStatus { COMPLETE, STREAMING, ERROR, CANCELLED }
     ],
     indices = [Index(value = ["chatId", "createdAt"])],
 )
+@kotlinx.serialization.Serializable
 data class MessageEntity(
     @PrimaryKey val id: String,
     val chatId: String,
@@ -85,6 +87,7 @@ data class MessageEntity(
 enum class MemoryTier { INSTANT, LONG_TERM }
 
 @Entity(tableName = "memories", indices = [Index("tier")])
+@kotlinx.serialization.Serializable
 data class MemoryEntity(
     @PrimaryKey val id: String,
     val tier: MemoryTier,

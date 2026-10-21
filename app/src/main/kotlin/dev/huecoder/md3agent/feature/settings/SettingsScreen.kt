@@ -36,6 +36,7 @@ import com.composables.icons.materialsymbols.rounded.Touch_app
 import com.composables.icons.materialsymbols.rounded.Info
 import com.composables.icons.materialsymbols.rounded.Bar_chart
 import com.composables.icons.materialsymbols.rounded.Palette
+import com.composables.icons.materialsymbols.rounded.Download
 import com.composables.icons.materialsymbols.rounded.Chevron_right
 import com.composables.icons.materialsymbols.rounded.Dns
 import com.composables.icons.materialsymbols.rounded.Face
@@ -74,6 +75,7 @@ data class SettingsDestinations(
     val access: () -> Unit,
     val mcp: () -> Unit,
     val statistics: () -> Unit,
+    val importFromPhone: () -> Unit = {},
 )
 
 @Composable
@@ -104,6 +106,12 @@ fun SettingsScreen(destinations: SettingsDestinations) {
                 title = stringResource(R.string.settings_appearance),
                 summary = stringResource(R.string.settings_appearance_summary),
                 onClick = destinations.appearance,
+            ),
+            SettingsEntry(
+                icon = MaterialSymbols.Rounded.Download,
+                title = stringResource(R.string.settings_import),
+                summary = stringResource(R.string.settings_import_summary),
+                onClick = destinations.importFromPhone,
             ),
         )
         val assistantEntries = listOf(

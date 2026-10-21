@@ -142,6 +142,7 @@ private fun MainPane(navController: NavController, replaceDetail: Boolean = fals
             access = { go(AccessRoute) },
             mcp = { go(McpServersRoute) },
             statistics = { go(StatisticsRoute) },
+            importFromPhone = { go(ImportRoute) },
         ),
     )
 }
@@ -183,6 +184,7 @@ private fun NavGraphBuilder.detailScreens(navController: NavController) {
     screen<ToolSettingsRoute>(navController) { ToolSettingsScreen(onBack = navController::popBackStack) }
     screen<RemindersRoute>(navController) { RemindersScreen(onBack = navController::popBackStack) }
     screen<AccessRoute>(navController) { AccessScreen(onBack = navController::popBackStack) }
+    screen<ImportRoute>(navController) { dev.huecoder.md3agent.feature.settings.ImportScreen(onBack = navController::popBackStack) }
     screen<AppearanceRoute>(navController) { AppearanceScreen(onBack = navController::popBackStack) }
     screen<ChatSettingsRoute>(navController) { ChatSettingsScreen(onBack = navController::popBackStack) }
     screen<StatisticsRoute>(navController) { StatisticsScreen(onBack = navController::popBackStack) }

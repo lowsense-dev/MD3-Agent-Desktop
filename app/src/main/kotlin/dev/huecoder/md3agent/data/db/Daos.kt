@@ -57,6 +57,9 @@ interface ChatDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(chat: ChatEntity)
 
+    @Query("SELECT * FROM chats WHERE trashedAt IS NULL ORDER BY createdAt")
+    suspend fun listAll(): List<ChatEntity>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertMessages(messages: List<MessageEntity>)
 

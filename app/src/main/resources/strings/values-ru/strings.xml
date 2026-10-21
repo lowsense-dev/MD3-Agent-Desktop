@@ -894,4 +894,23 @@
     <string name="overlay_title">MD3 Agent: быстрый вопрос</string>
     <string name="overlay_expand">Открыть в приложении</string>
     <string name="alarm_missed_hint">Сработало, пока компьютер или приложение были выключены.</string>
+    <string name="settings_import">Импорт с телефона</string>
+    <string name="settings_import_summary">Провайдеры, ключи, агенты, память и чаты из MD3 Agent на Android</string>
+    <string name="import_hint">На телефоне откройте Настройки → Экспорт для ПК, задайте пароль и сохраните файл. Перенесите его сюда и выберите ниже.</string>
+    <string name="import_choose_file">Выбрать файл</string>
+    <string name="import_password">Пароль</string>
+    <string name="import_read">Прочитать файл</string>
+    <string name="import_apply">Импортировать</string>
+    <string name="import_new_items">Будет добавлено: %1$d</string>
+    <string name="import_conflicts">Уже есть здесь. Отметьте, что заменить версией с телефона:</string>
+    <string name="import_kind_provider">Провайдер</string>
+    <string name="import_kind_agent">Агент</string>
+    <string name="import_kind_mcp">MCP-сервер</string>
+    <string name="import_kind_memory">Память</string>
+    <string name="import_kind_chat">Чат</string>
+    <string name="import_kind_settings">Настройки: сеть, чат, голос, интерфейс и параметры тулов</string>
+    <string name="import_done">Импортировано</string>
+    <string name="import_error_password">Неверный пароль</string>
+    <string name="import_error_format">Файл от более новой версии MD3 Agent</string>
+    <string name="import_error_file">Это не экспорт MD3 Agent, или файл повреждён</string>
 </resources>
