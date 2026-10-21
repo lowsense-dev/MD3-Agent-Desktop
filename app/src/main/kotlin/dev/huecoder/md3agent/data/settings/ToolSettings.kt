@@ -102,7 +102,11 @@ data class McpServer(
     val headers: List<HeaderEntry> = emptyList(),
     val enabled: Boolean = true,
     val oauth: McpOAuthSession? = null,
+    /** A local server started with this shell command and spoken to over stdin/stdout; [url] is unused then. */
+    val command: String = "",
 ) {
+    val isStdio: Boolean get() = command.isNotBlank()
+
     fun requestHeaders(): List<HeaderEntry> =
         headers.filter { it.name.isNotBlank() } + listOfNotNull(apiKey.trim().takeIf { it.isNotEmpty() }?.let { HeaderEntry(AUTHORIZATION, "Bearer $it") })
 

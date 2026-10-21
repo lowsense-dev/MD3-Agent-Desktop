@@ -44,7 +44,7 @@
     <string name="agent_delete">Удалить агента</string>
     <string name="agent_name">Имя агента</string>
     <string name="agent_system_prompt">Системный промпт</string>
-    <string name="agent_variables_hint">Переменные подставляются при каждом запросе. Тап вставит её в позицию курсора.</string>
+    <string name="agent_variables_hint">Переменные подставляются при каждом запросе. Нажми на одну, чтобы вставить её в позицию курсора.</string>
     <string name="agent_preview_prompt">Показать результат</string>
     <string name="agent_reset_prompt">Сбросить промпт</string>
     <string name="agent_section_voice">Голос</string>
@@ -70,7 +70,7 @@
     <string name="tools_category_files">Файлы</string>
     <string name="tools_category_time">Напоминания и будильники</string>
     <string name="tools_set_reminder_title">Поставить напоминание</string>
-    <string name="tools_set_reminder_summary">Пришлёт уведомление в нужный момент, по тапу откроется чат</string>
+    <string name="tools_set_reminder_summary">Присылает уведомление в нужный момент, по клику откроется чат</string>
     <string name="tools_list_reminders_title">Список напоминаний</string>
     <string name="tools_list_reminders_summary">Видит, какие напоминания ещё впереди</string>
     <string name="tools_cancel_reminder_title">Отменить напоминание</string>
@@ -88,7 +88,7 @@
         <item quantity="many">%d впереди</item>
         <item quantity="other">%d впереди</item>
     </plurals>
-    <string name="reminders_hint">Их ставит ассистент, когда ты просишь о чём-то напомнить. В нужный момент придёт уведомление, по тапу откроется чат, из которого оно пришло.</string>
+    <string name="reminders_hint">Их ставит ассистент, когда ты просишь о чём-то напомнить. В нужный момент придёт уведомление, по клику откроется чат, из которого оно пришло.</string>
     <string name="reminders_notifications_off">Уведомления для приложения выключены, поэтому напоминания не появятся. Разреши их в разделе «Доступ и разрешения».</string>
     <string name="reminders_empty">Напоминаний пока нет. Попроси ассистента напомнить о чём-нибудь через час.</string>
     <string name="reminders_cancel">Отменить напоминание</string>
@@ -268,7 +268,7 @@
     <string name="voice_settings_engine">Синтез речи</string>
     <string name="voice_output_system">Системный</string>
     <string name="voice_output_provider">Провайдер</string>
-    <string name="voice_settings_engine_hint_system">Использует движок синтеза речи на телефоне. Работает без интернета.</string>
+    <string name="voice_settings_engine_hint_system">Использует speech-dispatcher, если он установлен (spd-say). Работает без интернета.</string>
     <string name="voice_settings_engine_hint_provider">Использует API синтеза речи у провайдера озвучки, выбранного ниже.</string>
     <string name="voice_settings_transcription_provider">Провайдер распознавания</string>
     <string name="voice_settings_chat_provider_label">%1$s (чат)</string>
@@ -280,7 +280,7 @@
     <string name="voice_provider_title_new">Новый голосовой провайдер</string>
     <string name="voice_provider_copy_from_chat">Взять адрес и ключ у провайдера чата</string>
     <string name="settings_write_refused">Не сохранено: сохранённые настройки не читаются. Ничего не перезаписано.</string>
-    <string name="endpoint_https_required">Нужен https: по обычному http ключ уйдёт в открытом виде. Обычный http допустим только для этого телефона или домашней сети.</string>
+    <string name="endpoint_https_required">Нужен https: по обычному http ключ уйдёт в открытом виде. Обычный http допустим только для этого компьютера или домашней сети.</string>
     <string name="provider_header_name_invalid">Только латиница, цифры и -</string>
     <string name="provider_header_value_invalid">Только ASCII в одну строку</string>
     <string name="provider_preset">Шаблон</string>
@@ -293,7 +293,7 @@
     <string name="voice_provider_speech_voice">Голос</string>
     <string name="voice_provider_speech_voice_hint">alloy, nova, shimmer и т.д., зависит от провайдера.</string>
     <string name="voice_provider_speech_voice_hint_gemini">Kore, Puck, Charon, Aoede и т.д., список голосов есть в доке Gemini.</string>
-    <string name="voice_provider_speech_voice_hint_elevenlabs">ID голоса. Нажми «Загрузить голоса», чтобы выбрать из своей библиотеки ElevenLabs по имени.</string>
+    <string name="voice_provider_speech_voice_hint_elevenlabs">ID голоса. Нажми «Загрузить голоса», чтобы выбрать по имени из своей библиотеки ElevenLabs.</string>
     <string name="chat_thinking">Думаю…</string>
     <string name="chat_speak">Прочитать вслух</string>
     <string name="chat_stop_speaking">Остановить озвучку</string>
@@ -312,7 +312,7 @@
     <string name="tools_search_hint">Поиск инструментов</string>
     <string name="tools_search_empty">Инструменты не найдены</string>
     <string name="tools_run_command_title">Команды shell</string>
-    <string name="tools_run_command_summary">Запускает команды на телефоне. Где именно, выбирается в «Доступе к устройству»</string>
+    <string name="tools_run_command_summary">Запускает команды на этом компьютере. Где именно, задаётся в разделе «Доступ»</string>
     <string name="chat_tool_running_command">Выполняю %1$s</string>
     <string name="chat_tool_command">Команда %1$s</string>
     <string name="settings_access">Доступ и разрешения</string>
@@ -337,7 +337,7 @@
     <string name="tools_section_fetch">Чтение страниц</string>
     <string name="tools_fetch_backend_direct">Напрямую</string>
     <string name="tools_fetch_backend_custom">Свой</string>
-    <string name="tools_fetch_backend_direct_hint">Телефон сам качает страницу и вырезает HTML. Без посредников, но страницы, которые собираются скриптами, придут пустыми.</string>
+    <string name="tools_fetch_backend_direct_hint">Приложение само качает страницу и вырезает HTML. Без посредников, но страницы, которые собираются скриптами, придут пустыми.</string>
     <string name="tools_fetch_backend_jina_hint">r.jina.ai рендерит страницу и отдаёт чистый markdown. Работает без ключа, бесплатный ключ поднимает лимит запросов.</string>
     <string name="tools_fetch_backend_custom_hint">Любой API-ридер, который берёт адрес страницы в URL. {url} заменяется на адрес страницы, без него адрес дописывается в конец.</string>
     <string name="tools_fetch_api_key">API-ключ (необязательно)</string>
@@ -349,7 +349,7 @@
     <string name="tools_write_file_title">Запись файлов</string>
     <string name="tools_write_file_summary">Создаёт и правит текстовые файлы</string>
     <string name="tools_send_files_title">Отправка файлов</string>
-    <string name="tools_send_files_summary">Показывает картинки и файлы с телефона прямо в чате</string>
+    <string name="tools_send_files_summary">Показывает картинки и файлы с компьютера прямо в чате</string>
     <string name="chat_tool_list_files">Папка %1$s</string>
     <string name="chat_tool_reading_file">Читаю %1$s</string>
     <string name="chat_tool_file">Файл %1$s</string>
@@ -584,7 +584,7 @@
     <string name="camera_frame_4_3">4:3</string>
     <string name="chat_settings_section_context">Контекст</string>
     <string name="settings_appearance">Внешний вид</string>
-    <string name="settings_appearance_summary">Свайпы в списке чатов, вибрация</string>
+    <string name="settings_appearance_summary">Тема, свайпы в списке чатов</string>
     <string name="settings_models">Модели</string>
     <string name="settings_models_summary">%1$s через %2$s</string>
     <string name="settings_models_summary_none">Добавь провайдера чтобы начать</string>
@@ -642,7 +642,7 @@
     <string name="tools_read_chat_title">Читать чат</string>
     <string name="tools_read_chat_summary">Читает сообщения из другого чата чтобы подхватить контекст</string>
     <string name="tools_export_chat_title">Сохранить чат в файл</string>
-    <string name="tools_export_chat_summary">Записывает чат в Markdown-файл на телефоне</string>
+    <string name="tools_export_chat_summary">Сохраняет чат в файл Markdown</string>
     <string name="chat_tool_diagram">Схема %1$s</string>
     <string name="tools_show_diagram_title">Показать схему</string>
     <string name="tools_show_diagram_summary">Рисует планы и процессы блоками со стрелками</string>
@@ -854,15 +854,15 @@
     <string name="reminder_action_snooze">Отложить на 10 мин</string>
     <string name="alarm_notification_title">Будильник</string>
     <plurals name="files_copied_to_clipboard">
-        <item quantity="one">%d файл скопирован, вставьте его куда нужно</item>
-        <item quantity="few">%d файла скопированы, вставьте их куда нужно</item>
-        <item quantity="many">%d файлов скопировано, вставьте их куда нужно</item>
-        <item quantity="other">%d файла скопировано, вставьте их куда нужно</item>
+        <item quantity="one">%d файл скопирован, вставь его куда нужно</item>
+        <item quantity="few">%d файла скопированы, вставь их куда нужно</item>
+        <item quantity="many">%d файлов скопировано, вставь их куда нужно</item>
+        <item quantity="other">%d файла скопировано, вставь их куда нужно</item>
     </plurals>
     <string name="access_mode_system">Система</string>
-    <string name="access_mode_system_summary">Ваш bash, доступно всё, что доступно вам</string>
+    <string name="access_mode_system_summary">Твой bash: доступно всё, что доступно тебе</string>
     <string name="access_files_home">Домашняя папка</string>
-    <string name="access_files_home_summary">Всё в вашей домашней папке</string>
+    <string name="access_files_home_summary">Всё в домашней папке</string>
     <string name="access_sandbox_network">Сеть в песочнице</string>
     <string name="access_sandbox_network_summary">Команды и скрипты в песочнице могут выходить в интернет</string>
     <string name="access_section_environment">Этот компьютер</string>
@@ -881,10 +881,10 @@
     <string name="env_systemd_user">Напоминания при закрытом приложении (systemd)</string>
     <string name="env_speech">Системная озвучка (speech-dispatcher)</string>
     <string name="access_section_shortcut">Окно быстрого вопроса</string>
-    <string name="access_shortcut_hint">Назначьте эту команду на сочетание клавиш в настройках вашего окружения:</string>
+    <string name="access_shortcut_hint">Назначь эту команду на сочетание клавиш в настройках своего окружения:</string>
     <string name="access_shortcut_bound">Назначено через окружение: %1$s</string>
     <string name="access_recheck">Проверить снова</string>
-    <string name="wide_empty_detail">Выберите чат слева или начните новый</string>
+    <string name="wide_empty_detail">Выбери чат слева или начни новый</string>
     <string name="appearance_section_theme">Тема</string>
     <string name="appearance_theme">Светлая или тёмная</string>
     <string name="appearance_theme_system">Системная</string>
@@ -896,13 +896,13 @@
     <string name="alarm_missed_hint">Сработало, пока компьютер или приложение были выключены.</string>
     <string name="settings_import">Импорт с телефона</string>
     <string name="settings_import_summary">Провайдеры, ключи, агенты, память и чаты из MD3 Agent на Android</string>
-    <string name="import_hint">На телефоне откройте Настройки → Экспорт для ПК, задайте пароль и сохраните файл. Перенесите его сюда и выберите ниже.</string>
+    <string name="import_hint">На телефоне открой Настройки → Экспорт для ПК, задай пароль и сохрани файл. Перенеси его сюда и выбери ниже.</string>
     <string name="import_choose_file">Выбрать файл</string>
     <string name="import_password">Пароль</string>
     <string name="import_read">Прочитать файл</string>
     <string name="import_apply">Импортировать</string>
     <string name="import_new_items">Будет добавлено: %1$d</string>
-    <string name="import_conflicts">Уже есть здесь. Отметьте, что заменить версией с телефона:</string>
+    <string name="import_conflicts">Это уже есть здесь. Отметь, что заменить версией с телефона:</string>
     <string name="import_kind_provider">Провайдер</string>
     <string name="import_kind_agent">Агент</string>
     <string name="import_kind_mcp">MCP-сервер</string>
@@ -913,4 +913,9 @@
     <string name="import_error_password">Неверный пароль</string>
     <string name="import_error_format">Файл от более новой версии MD3 Agent</string>
     <string name="import_error_file">Это не экспорт MD3 Agent, или файл повреждён</string>
+    <string name="mcp_transport_http">Удалённый (HTTP)</string>
+    <string name="mcp_transport_local">Локальная команда</string>
+    <string name="mcp_server_command">Команда</string>
+    <string name="mcp_server_command_placeholder">npx -y @modelcontextprotocol/server-filesystem ~/Documents</string>
+    <string name="mcp_server_command_hint">Запускается через твою оболочку, общение через stdin/stdout; останавливается, когда приложение закрывается.</string>
 </resources>

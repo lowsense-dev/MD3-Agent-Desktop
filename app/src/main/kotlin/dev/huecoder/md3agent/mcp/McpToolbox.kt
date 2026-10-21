@@ -46,6 +46,7 @@ class McpToolbox(
     private val _states = MutableStateFlow<Map<String, McpServerState>>(emptyMap())
     private val loaded = mutableMapOf<String, McpServer>()
     private val jobs = mutableMapOf<String, Job>()
+    private val clients = mutableMapOf<String, McpClient>()
 
     val states: StateFlow<Map<String, McpServerState>> = _states.asStateFlow()
 
@@ -56,7 +57,7 @@ class McpToolbox(
 
     @Synchronized
     fun sync(servers: List<McpServer>) {
-        val wanted = servers.filter { it.enabled && it.url.isNotBlank() }.associateBy { it.id }
+        val wanted = servers.filter { it.enabled && (it.url.isNotBlank() || it.isStdio) }.associateBy { it.id }
         wanted.values.forEach { server -> server.oauth?.let { sessions[server.id] = it } ?: sessions.remove(server.id) }
         (loaded.keys - wanted.keys).forEach(::forget)
         wanted.values.filter { loaded[it.id]?.withoutTokenValues() != it.withoutTokenValues() }.forEach(::load)
@@ -67,21 +68,38 @@ class McpToolbox(
         loaded[serverId]?.let(::load)
     }
 
+    /** Stops every stdio server; called when the app exits. */
+    @Synchronized
+    fun closeAll() {
+        clients.values.forEach { it.close() }
+        clients.clear()
+    }
+
     override suspend fun awaitReady() {
         withTimeoutOrNull(SETTLE_TIMEOUT_MS) { _states.first { states -> states.values.none { it is McpServerState.Loading } } }
     }
 
-    suspend fun probe(server: McpServer): List<McpRemoteTool> = McpClient(server, authorizerFor(server), httpClients::current).listTools()
+    suspend fun probe(server: McpServer): List<McpRemoteTool> {
+        val client = McpClient(server, authorizerFor(server), client = httpClients::current)
+        return try {
+            client.listTools()
+        } finally {
+            client.close()
+        }
+    }
 
     private fun authorizerFor(server: McpServer): McpAuthorizer = SessionAuthorizer(server)
 
     private fun load(server: McpServer) {
         jobs.remove(server.id)?.cancel()
+        // A stdio server is a process of ours; the old one stops before the new one starts.
+        clients.remove(server.id)?.close()
         loaded[server.id] = server
         _states.update { it + (server.id to McpServerState.Loading) }
         jobs[server.id] = scope.launch {
             val state = try {
-                val client = McpClient(server, authorizerFor(server), httpClients::current)
+                val client = McpClient(server, authorizerFor(server), client = httpClients::current)
+                synchronized(this@McpToolbox) { clients[server.id] = client }
                 McpServerState.Ready(client.listTools().map { McpTool(server.name, it, client, attachments, prompts) })
             } catch (e: CancellationException) {
                 throw e
@@ -122,6 +140,7 @@ class McpToolbox(
 
     private fun forget(serverId: String) {
         jobs.remove(serverId)?.cancel()
+        clients.remove(serverId)?.close()
         loaded.remove(serverId)
         _states.update { it - serverId }
     }

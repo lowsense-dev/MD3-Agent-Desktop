@@ -93,4 +93,20 @@ class ScreensRenderTest {
             assertNotBlank(name, image)
         }
     }
+
+    @Test
+    fun rendersSettingsListAndImport() {
+        val settings = renderScreen("settings", 420, 1500, frames = 10) {
+            TestApp(container) {
+                dev.huecoder.md3agent.feature.settings.SettingsScreen(
+                    dev.huecoder.md3agent.feature.settings.SettingsDestinations({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
+                )
+            }
+        }
+        assertNotBlank("settings", settings)
+        val import = renderScreen("import", 420, 900, frames = 6) {
+            TestApp(container, dark = true) { dev.huecoder.md3agent.feature.settings.ImportScreen(onBack = {}) }
+        }
+        assertNotBlank("import", import)
+    }
 }

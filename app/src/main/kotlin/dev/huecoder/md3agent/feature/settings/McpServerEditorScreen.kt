@@ -82,16 +82,32 @@ fun McpServerEditorScreen(serverId: String?, onDone: () -> Unit) {
                 label = stringResource(R.string.mcp_server_name),
                 modifier = Modifier.fillMaxWidth(),
             )
-            FormField(
-                value = current.url,
-                onValueChange = { value -> viewModel.edit { it.copy(url = value) } },
-                label = stringResource(R.string.mcp_server_url),
-                placeholder = stringResource(R.string.mcp_server_url_placeholder),
-                isError = current.urlError != null,
-                supportingText = current.urlError?.asString() ?: stringResource(R.string.mcp_server_url_hint),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                modifier = Modifier.fillMaxWidth(),
+            SegmentedChoices(
+                choices = listOf(Choice(false, R.string.mcp_transport_http), Choice(true, R.string.mcp_transport_local)),
+                selected = current.local,
+                onSelect = { local -> viewModel.edit { it.copy(local = local) } },
             )
+            if (current.local) {
+                FormField(
+                    value = current.command,
+                    onValueChange = { value -> viewModel.edit { it.copy(command = value) } },
+                    label = stringResource(R.string.mcp_server_command),
+                    placeholder = stringResource(R.string.mcp_server_command_placeholder),
+                    supportingText = stringResource(R.string.mcp_server_command_hint),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            } else {
+                FormField(
+                    value = current.url,
+                    onValueChange = { value -> viewModel.edit { it.copy(url = value) } },
+                    label = stringResource(R.string.mcp_server_url),
+                    placeholder = stringResource(R.string.mcp_server_url_placeholder),
+                    isError = current.urlError != null,
+                    supportingText = current.urlError?.asString() ?: stringResource(R.string.mcp_server_url_hint),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
             SecretField(
                 value = current.apiKey,
                 onValueChange = { value -> viewModel.edit { it.copy(apiKey = value) } },

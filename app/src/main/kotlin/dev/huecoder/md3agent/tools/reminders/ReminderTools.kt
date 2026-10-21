@@ -42,7 +42,7 @@ private fun ReminderEntity.describe(clock: ReminderClock) = "[$id] ${clock.forma
 class SetReminderTool(private val reminders: ReminderRepository, private val clock: ReminderClock = ReminderClock()) : ContextualTool {
     override val spec = ToolSpec(
         name = NAME,
-        description = "Schedules a reminder: at the given moment the user gets a notification with your text, and tapping it " +
+        description = "Schedules a reminder: at the given moment the user gets a desktop notification with your text, and clicking it " +
             "opens this chat. Give either an exact local time in \"at\" or a delay in \"in_minutes\", not both. Write the text " +
             "as the note the user should read, in their language.",
         parameters = objectSchema(required = listOf("text")) {

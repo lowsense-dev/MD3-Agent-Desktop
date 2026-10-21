@@ -51,24 +51,24 @@ class McpTransport(
     private val headers: List<HeaderEntry>,
     private val authorizer: McpAuthorizer?,
     private val client: () -> OkHttpClient,
-) {
+) : McpChannel {
     private val json = Json { ignoreUnknownKeys = true }
     private val nextId = AtomicLong(1)
 
     @Volatile
-    var sessionId: String? = null
+    override var sessionId: String? = null
 
     @Volatile
-    var protocolVersion: String? = null
+    override var protocolVersion: String? = null
 
-    suspend fun request(method: String, params: JsonObject? = null, serverRequests: McpServerRequests = McpServerRequests.NONE): JsonObject {
+    override suspend fun request(method: String, params: JsonObject?, serverRequests: McpServerRequests): JsonObject {
         val id = nextId.getAndIncrement()
         val body = message(method, params) { put("id", id) }
         return exchange(body) { readResponse(it, id, serverRequests) }
             ?: throw McpException("The server closed the stream without answering $method")
     }
 
-    suspend fun notify(method: String, params: JsonObject? = null) {
+    override suspend fun notify(method: String, params: JsonObject?) {
         exchange(message(method, params) {}) { null }
     }
 

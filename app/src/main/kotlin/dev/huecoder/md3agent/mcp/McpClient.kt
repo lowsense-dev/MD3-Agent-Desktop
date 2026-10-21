@@ -24,8 +24,14 @@ sealed interface McpContent {
 
 data class McpCallResult(val content: List<McpContent>, val isError: Boolean)
 
-class McpClient(server: McpServer, private val authorizer: McpAuthorizer?, client: () -> OkHttpClient) {
-    private val transport = McpTransport(server.url.trim(), server.requestHeaders(), authorizer, client)
+class McpClient(
+    server: McpServer,
+    private val authorizer: McpAuthorizer?,
+    workdir: java.io.File = java.io.File(System.getProperty("user.home")),
+    client: () -> OkHttpClient,
+) {
+    private val transport: McpChannel =
+        if (server.isStdio) StdioTransport(server.command, workdir) else McpTransport(server.url.trim(), server.requestHeaders(), authorizer, client)
     private val initLock = Mutex()
 
     @Volatile
@@ -58,6 +64,9 @@ class McpClient(server: McpServer, private val authorizer: McpAuthorizer?, clien
         )
         parseResult(result)
     }
+
+    /** Stops a stdio server's process; nothing to do for HTTP servers. */
+    fun close() = transport.close()
 
     private suspend fun <T> inSession(block: suspend () -> T): T = withAuthRetry {
         ensureInitialized()

@@ -31,12 +31,15 @@ data class McpServerForm(
     val headers: List<HeaderEntry> = emptyList(),
     val enabled: Boolean = true,
     val oauth: McpOAuthSession? = null,
+    /** True for a local server started by [command] (stdio) instead of one reached at [url]. */
+    val local: Boolean = false,
+    val command: String = "",
 ) {
     val urlError: UiText?
-        get() = endpointUrlError(url, carriesSecrets = apiKey.isNotBlank() || oauth != null || headers.any { it.name.isNotBlank() }, R.string.mcp_url_invalid)
+        get() = if (local) null else endpointUrlError(url, carriesSecrets = apiKey.isNotBlank() || oauth != null || headers.any { it.name.isNotBlank() }, R.string.mcp_url_invalid)
 
     val canSave: Boolean
-        get() = name.isNotBlank() && url.isNotBlank() && urlError == null && HeaderRules.allValid(headers)
+        get() = name.isNotBlank() && (if (local) command.isNotBlank() else url.isNotBlank() && urlError == null) && HeaderRules.allValid(headers)
 
     fun toServer() = McpServer(
         id = id,
@@ -46,6 +49,7 @@ data class McpServerForm(
         headers = headers.filter { it.name.isNotBlank() },
         enabled = enabled,
         oauth = oauth,
+        command = if (local) command.trim() else "",
     )
 }
 
@@ -84,7 +88,7 @@ class McpServerEditorViewModel(
             val existing = settings.current().tools.mcpServers.firstOrNull { it.id == serverId }
             draft.load(
                 existing?.let {
-                    McpServerForm(it.id, isNew = false, name = it.name, url = it.url, apiKey = it.apiKey, headers = it.headers, enabled = it.enabled, oauth = it.oauth)
+                    McpServerForm(it.id, isNew = false, name = it.name, url = it.url, apiKey = it.apiKey, headers = it.headers, enabled = it.enabled, oauth = it.oauth, local = it.isStdio, command = it.command)
                 } ?: McpServerForm(id = settings.newProviderId(), isNew = true),
             )
             settings.settings.map { current -> current.tools.mcpServers.firstOrNull { it.id == draft.current?.id }?.oauth }

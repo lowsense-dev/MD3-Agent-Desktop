@@ -36,6 +36,8 @@ fun main(args: Array<String>) {
         }
     }
     container.reminderAlarms.onOpenChat = { chatId -> windows.showChat(chatId) }
+    // Local MCP servers are child processes; they must not outlive the app.
+    Runtime.getRuntime().addShutdownHook(Thread { container.mcp.closeAll() })
     socket.listen(handle)
 
     // Started by a reminder timer: no main window, just the notification or alarm; quit when nothing is left to show.

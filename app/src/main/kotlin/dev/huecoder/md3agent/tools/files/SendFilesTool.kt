@@ -21,7 +21,7 @@ class SendFilesTool(private val files: DeviceFiles, private val store: Attachmen
     override val spec = ToolSpec(
         name = NAME,
         description = "Shows files from the computer to the user right in the chat: images as a picture, an album or a slider, " +
-            "other files as cards the user can tap to open. Use it whenever the user wants to see or get a file instead of just naming the path. " +
+            "other files as cards the user can click to open. Use it whenever the user wants to see or get a file instead of just naming the path. " +
             "You do not see the files yourself through this tool. " +
             "For pictures on the web, embed them in your reply as markdown ![description](https://...) instead.",
         parameters = objectSchema(required = listOf("paths")) {
