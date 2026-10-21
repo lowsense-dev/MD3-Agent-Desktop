@@ -27,6 +27,8 @@ val generateR by tasks.registering {
     val strings = file("src/main/resources/strings/values/strings.xml")
     val out = layout.buildDirectory.dir("generated/r")
     val version = appVersion
+    val drawableDir = file("src/main/resources/drawable")
+    inputs.dir(drawableDir)
     inputs.file(strings)
     inputs.property("version", version)
     outputs.dir(out)
@@ -36,6 +38,7 @@ val generateR by tasks.registering {
             val nodes = doc.getElementsByTagName(tag)
             return (0 until nodes.length).map { nodes.item(it).attributes.getNamedItem("name").nodeValue }
         }
+        val drawables = drawableDir.listFiles { f -> f.extension == "xml" }.orEmpty().map { it.nameWithoutExtension }.sorted()
         val text = buildString {
             appendLine("package dev.huecoder.md3agent")
             appendLine()
@@ -47,6 +50,10 @@ val generateR by tasks.registering {
             appendLine("    object plurals {")
             names("plurals").forEachIndexed { i, n -> appendLine("        const val $n: Int = ${100_000 + i}") }
             appendLine("    }")
+            appendLine("    object drawable {")
+            drawables.forEachIndexed { i, n -> appendLine("        const val $n: Int = ${200_000 + i}") }
+            appendLine("    }")
+            appendLine("    val drawableNames: Map<Int, String> = mapOf(${drawables.mapIndexed { i, n -> "${200_000 + i} to \"$n\"" }.joinToString()})")
             appendLine("    val stringNames: List<String> = listOf(${names("string").joinToString { "\"$it\"" }})")
             appendLine("    val pluralNames: List<String> = listOf(${names("plurals").joinToString { "\"$it\"" }})")
             appendLine("}")
